@@ -1,0 +1,99 @@
+import { isBlackKey, midiToNoteName, midiToFrequency, MIN_MIDI, MAX_MIDI } from '../src/lib/music';
+import { computePianoLayout, getKeyAtPoint, clampStartOctave } from '../src/lib/layout';
+
+function assert(condition: boolean, message: string) {
+  if (!condition) {
+    throw new Error(`Assertion failed: ${message}`);
+  }
+  console.log(`✓ ${message}`);
+}
+
+console.log('--- Testing Music Helpers ---');
+
+// 1. Black keys test
+assert(!isBlackKey(60), 'MIDI 60 (C4) is white');
+assert(isBlackKey(61), 'MIDI 61 (C#4) is black');
+assert(!isBlackKey(62), 'MIDI 62 (D4) is white');
+assert(isBlackKey(63), 'MIDI 63 (D#4) is black');
+assert(!isBlackKey(64), 'MIDI 64 (E4) is white');
+assert(!isBlackKey(65), 'MIDI 65 (F4) is white');
+assert(isBlackKey(66), 'MIDI 66 (F#4) is black');
+assert(!isBlackKey(67), 'MIDI 67 (G4) is white');
+assert(isBlackKey(68), 'MIDI 68 (G#4) is black');
+assert(!isBlackKey(69), 'MIDI 69 (A4) is white');
+assert(isBlackKey(70), 'MIDI 70 (A#4) is black');
+assert(!isBlackKey(71), 'MIDI 71 (B4) is white');
+assert(!isBlackKey(72), 'MIDI 72 (C5) is white');
+
+// 2. Note name test
+assert(midiToNoteName(21) === 'A0', 'MIDI 21 is A0');
+assert(midiToNoteName(60) === 'C4', 'MIDI 60 is C4');
+assert(midiToNoteName(69) === 'A4', 'MIDI 69 is A4');
+assert(midiToNoteName(108) === 'C8', 'MIDI 108 is C8');
+
+// 3. Frequency test
+assert(Math.abs(midiToFrequency(69) - 440) < 0.001, 'A4 frequency is 440Hz');
+assert(Math.abs(midiToFrequency(57) - 220) < 0.001, 'A3 frequency is 220Hz');
+
+console.log('\n--- Testing Layout Single Source of Truth ---');
+
+// 4. All 88 keys layout
+const layout88 = computePianoLayout({
+  screenWidth: 1366,
+  screenHeight: 768,
+  octaves: 'all',
+  startOctave: 1,
+  pianoHeightRatio: 0.6,
+});
+
+assert(layout88.allKeys.length === 88, 'All 88 layout has exactly 88 keys');
+assert(layout88.whiteKeys.length === 52, 'All 88 layout has exactly 52 white keys');
+assert(layout88.blackKeys.length === 36, 'All 88 layout has exactly 36 black keys');
+assert(layout88.startMidi === 21, 'All 88 starts at A0 (21)');
+assert(layout88.endMidi === 108, 'All 88 ends at C8 (108)');
+assert(layout88.whiteKeyWidth === 1366 / 52, 'White key width matches screenWidth / 52');
+
+// 5. 3 Octaves Layout
+const layout3 = computePianoLayout({
+  screenWidth: 900,
+  screenHeight: 450,
+  octaves: 3,
+  startOctave: 3,
+  pianoHeightRatio: 0.6,
+});
+
+// 3 octaves starting at C3: C3..C6 = 3 * 7 + 1 = 22 white keys
+assert(layout3.whiteKeys.length === 22, '3 octaves has 22 white keys (C3 to C6)');
+assert(layout3.blackKeys.length === 15, '3 octaves has 15 black keys');
+assert(layout3.allKeys.length === 37, '3 octaves has 37 total keys');
+assert(layout3.startMidi === 48, 'C3 is MIDI 48');
+assert(layout3.endMidi === 84, 'C6 is MIDI 84');
+
+console.log('\n--- Testing Hit Priority (Black keys over White keys) ---');
+
+// In layout3:
+// Find C#3 (MIDI 49)
+const cSharp = layout3.keyByMidi.get(49)!;
+assert(cSharp !== undefined, 'C#3 exists in layout');
+assert(cSharp.isBlack, 'C#3 is black key');
+
+// Test point right in the center of C#3
+const hitBlack = getKeyAtPoint(cSharp.x + cSharp.width / 2, cSharp.y + cSharp.height / 2, layout3);
+assert(hitBlack?.midi === 49, 'Clicking on black key C#3 returns C#3 (hit priority works)');
+
+// Test point at the bottom of the keyboard directly underneath C#3's x position
+// Since black key does not extend to the bottom of the white key, this must hit the white key!
+const hitWhiteBelow = getKeyAtPoint(cSharp.x + cSharp.width / 2, layout3.pianoY + layout3.pianoHeight - 10, layout3);
+assert(hitWhiteBelow !== null && !hitWhiteBelow.isBlack, 'Clicking below black key hits underlying white key');
+
+// Test point outside piano area
+const hitAbove = getKeyAtPoint(cSharp.x, layout3.pianoY - 20, layout3);
+assert(hitAbove === null, 'Clicking outside piano returns null');
+
+console.log('\n--- Testing Octave Clamping ---');
+assert(clampStartOctave(5, 3) === 5, 'Start octave 5 is valid for 3 octaves (5..8)');
+assert(clampStartOctave(7, 3) === 5, 'Start octave 7 clamps to 5 for 3 octaves');
+assert(clampStartOctave(0, 3) === 1, 'Start octave 0 clamps to 1');
+assert(clampStartOctave(3, 'all') === 1, 'Start octave is 1 for all 88 keys');
+
+console.log('\nALL TESTS PASSED SUCCESSFULLY! 🎉');
