@@ -188,3 +188,56 @@ export function getKeyAtPoint(x: number, y: number, layout: PianoLayout): KeyLay
 
   return null;
 }
+
+const SEMITONE_TO_WHITE_INDEX = [0, 0, 1, 1, 2, 3, 3, 4, 4, 5, 5, 6];
+
+/**
+ * Computes the exact geometric bounds of any MIDI note in the coordinate space of a given layout.
+ * Works for notes inside the layout as well as notes off-screen to the left or right.
+ */
+export function getMidiKeyBoundsInLayout(
+  midi: number,
+  layout: PianoLayout
+): { x: number; y: number; width: number; height: number; isBlack: boolean } {
+  const existing = layout.keyByMidi.get(midi);
+  if (existing) {
+    return {
+      x: existing.x,
+      y: existing.y,
+      width: existing.width,
+      height: existing.height,
+      isBlack: existing.isBlack,
+    };
+  }
+
+  const isBlack = isBlackKey(midi);
+  const octave = Math.floor(midi / 12) - 1;
+  const semitone = ((midi % 12) + 12) % 12;
+  const whiteIdx = octave * 7 + SEMITONE_TO_WHITE_INDEX[semitone];
+
+  const startOctave = Math.floor(layout.startMidi / 12) - 1;
+  const startSemitone = ((layout.startMidi % 12) + 12) % 12;
+  const startWhiteIdx = startOctave * 7 + SEMITONE_TO_WHITE_INDEX[startSemitone];
+
+  const relWhiteIdx = whiteIdx - startWhiteIdx;
+
+  if (!isBlack) {
+    return {
+      x: relWhiteIdx * layout.whiteKeyWidth,
+      y: layout.pianoY,
+      width: layout.whiteKeyWidth,
+      height: layout.whiteKeyHeight,
+      isBlack: false,
+    };
+  } else {
+    const boundaryX = (relWhiteIdx + 1) * layout.whiteKeyWidth;
+    return {
+      x: boundaryX - layout.blackKeyWidth / 2,
+      y: layout.pianoY,
+      width: layout.blackKeyWidth,
+      height: layout.blackKeyHeight,
+      isBlack: true,
+    };
+  }
+}
+

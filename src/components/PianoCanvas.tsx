@@ -3,8 +3,8 @@
 import React, { useEffect, useRef } from 'react';
 import { Application, Container, Graphics, Text } from 'pixi.js';
 import { usePianoStore } from '../store/pianoStore';
-import { computePianoLayout, getKeyAtPoint, PianoLayout, KeyLayout } from '../lib/layout';
-import { getPitchColor, isBlackKey } from '../lib/music';
+import { computePianoLayout, getKeyAtPoint, PianoLayout, KeyLayout, getMidiKeyBoundsInLayout } from '../lib/layout';
+import { getPitchColor, isBlackKey, midiToNoteName } from '../lib/music';
 import { inputDispatcher } from '../lib/input/dispatcher';
 import { PointerInputHandler } from '../lib/input/pointer';
 import { KeyboardInputHandler, getKeyboardKeyForMidi } from '../lib/input/keyboard';
@@ -65,12 +65,14 @@ export const PianoCanvas: React.FC = () => {
     let labelsContainer: Container;
     let particleSystem: ParticleSystem;
 
-    // Animation / Tweening state
+    // Animation / Tweening state (continuous viewport camera pan)
     let stars: Star[] = [];
     let tweenStartTime = 0;
-    const TWEEN_DURATION = 180; // ms
+    const TWEEN_DURATION = 320; // Silky smooth 320ms continuous pan
     let isTweening = false;
-    let prevLayoutMap = new Map<number, { x: number; y: number; width: number; height: number }>();
+    const tweenStartKeyBounds = new Map<number, { x: number; y: number; width: number; height: number; isBlack: boolean }>();
+    const tweenEndKeyBounds = new Map<number, { x: number; y: number; width: number; height: number; isBlack: boolean }>();
+    let allTweenMidis: number[] = [];
     let targetLayout: PianoLayout;
 
     // Active rendered keys
@@ -301,13 +303,35 @@ export const PianoCanvas: React.FC = () => {
         return;
       }
 
-      // Record previous key bounds for tweening
-      prevLayoutMap.clear();
+      const prevLayout = activeLayoutRef.current;
+      targetLayout = newTarget;
+
+      // Span all MIDI notes between previous layout and target layout to ensure continuous camera panning
+      const minMidi = Math.min(prevLayout.startMidi, targetLayout.startMidi);
+      const maxMidi = Math.max(prevLayout.endMidi, targetLayout.endMidi);
+
+      tweenStartKeyBounds.clear();
+      tweenEndKeyBounds.clear();
+      const midisList: number[] = [];
+
+      // If mid-flight during another tween, preserve the current live interpolated positions
+      const currentPosMap = new Map<number, { x: number; y: number; width: number; height: number }>();
       for (const k of currentRenderKeys) {
-        prevLayoutMap.set(k.midi, { x: k.x, y: k.y, width: k.width, height: k.height });
+        currentPosMap.set(k.midi, { x: k.x, y: k.y, width: k.width, height: k.height });
       }
 
-      targetLayout = newTarget;
+      for (let m = minMidi; m <= maxMidi; m++) {
+        midisList.push(m);
+        const cur = currentPosMap.get(m);
+        const prevCalc = getMidiKeyBoundsInLayout(m, prevLayout);
+        const startB = cur ? { ...prevCalc, x: cur.x, y: cur.y, width: cur.width, height: cur.height } : prevCalc;
+        const endB = getMidiKeyBoundsInLayout(m, targetLayout);
+
+        tweenStartKeyBounds.set(m, startB);
+        tweenEndKeyBounds.set(m, endB);
+      }
+
+      allTweenMidis = midisList;
       tweenStartTime = performance.now();
       isTweening = true;
     };
@@ -317,30 +341,36 @@ export const PianoCanvas: React.FC = () => {
 
       const elapsed = now - tweenStartTime;
       const progress = Math.min(1, elapsed / TWEEN_DURATION);
-      // Cubic ease-out
-      const ease = 1 - Math.pow(1 - progress, 3);
+      // Quintic ease-out for ultra-luxurious, butter-smooth camera pan feel
+      const ease = 1 - Math.pow(1 - progress, 4);
 
       const nextKeys: KeyLayout[] = [];
       const nextKeyByMidi = new Map<number, KeyLayout>();
       const nextWhiteKeys: KeyLayout[] = [];
       const nextBlackKeys: KeyLayout[] = [];
 
-      for (let i = 0; i < targetLayout.allKeys.length; i++) {
-        const targetKey = targetLayout.allKeys[i];
-        const prev = prevLayoutMap.get(targetKey.midi) || {
-          x: targetKey.x,
-          y: targetKey.y,
-          width: targetKey.width,
-          height: targetKey.height,
-        };
+      const screenWidth = targetLayout.width;
 
-        const currentX = prev.x + (targetKey.x - prev.x) * ease;
-        const currentW = prev.width + (targetKey.width - prev.width) * ease;
-        const currentY = prev.y + (targetKey.y - prev.y) * ease;
-        const currentH = prev.height + (targetKey.height - prev.height) * ease;
+      for (let i = 0; i < allTweenMidis.length; i++) {
+        const midi = allTweenMidis[i];
+        const start = tweenStartKeyBounds.get(midi)!;
+        const end = tweenEndKeyBounds.get(midi)!;
 
+        const currentX = start.x + (end.x - start.x) * ease;
+        const currentW = start.width + (end.width - start.width) * ease;
+        const currentY = start.y + (end.y - start.y) * ease;
+        const currentH = start.height + (end.height - start.height) * ease;
+
+        // Cull keys that are completely off-screen with small buffer
+        if (currentX + currentW < -10 || currentX > screenWidth + 10) {
+          continue;
+        }
+
+        const isBlack = start.isBlack;
         const k: KeyLayout = {
-          ...targetKey,
+          midi,
+          noteName: midiToNoteName(midi),
+          isBlack,
           x: currentX,
           y: currentY,
           width: currentW,
@@ -348,8 +378,8 @@ export const PianoCanvas: React.FC = () => {
         };
 
         nextKeys.push(k);
-        nextKeyByMidi.set(k.midi, k);
-        if (k.isBlack) {
+        nextKeyByMidi.set(midi, k);
+        if (isBlack) {
           nextBlackKeys.push(k);
         } else {
           nextWhiteKeys.push(k);

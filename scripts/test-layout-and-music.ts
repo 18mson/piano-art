@@ -1,5 +1,5 @@
 import { isBlackKey, midiToNoteName, midiToFrequency, MIN_MIDI, MAX_MIDI } from '../src/lib/music';
-import { computePianoLayout, getKeyAtPoint, clampStartOctave } from '../src/lib/layout';
+import { computePianoLayout, getKeyAtPoint, clampStartOctave, getMidiKeyBoundsInLayout } from '../src/lib/layout';
 
 function assert(condition: boolean, message: string) {
   if (!condition) {
@@ -95,5 +95,24 @@ assert(clampStartOctave(5, 3) === 5, 'Start octave 5 is valid for 3 octaves (5..
 assert(clampStartOctave(7, 3) === 5, 'Start octave 7 clamps to 5 for 3 octaves');
 assert(clampStartOctave(0, 3) === 1, 'Start octave 0 clamps to 1');
 assert(clampStartOctave(3, 'all') === 1, 'Start octave is 1 for all 88 keys');
+
+console.log('\n--- Testing Continuous Pan Coordinates (getMidiKeyBoundsInLayout) ---');
+// In layout3 (C3 to C6, startMidi = 48, whiteKeyWidth = 900 / 22):
+const wkw = 900 / 22;
+// Note C3 (MIDI 48) is at x = 0
+const c3Bounds = getMidiKeyBoundsInLayout(48, layout3);
+assert(Math.abs(c3Bounds.x - 0) < 0.001, 'C3 is at x = 0');
+
+// Note C2 (MIDI 36) is 1 octave (7 white keys) to the left of C3 -> x = -7 * wkw
+const c2Bounds = getMidiKeyBoundsInLayout(36, layout3);
+assert(Math.abs(c2Bounds.x - (-7 * wkw)) < 0.001, 'C2 is exactly -7 white keys to the left');
+
+// Note C6 (MIDI 84) is at x = 21 * wkw
+const c6Bounds = getMidiKeyBoundsInLayout(84, layout3);
+assert(Math.abs(c6Bounds.x - (21 * wkw)) < 0.001, 'C6 is at x = 21 * wkw');
+
+// Note C7 (MIDI 96) is 1 octave (7 white keys) to the right of C6 -> x = 28 * wkw
+const c7Bounds = getMidiKeyBoundsInLayout(96, layout3);
+assert(Math.abs(c7Bounds.x - (28 * wkw)) < 0.001, 'C7 is exactly 28 white keys from start');
 
 console.log('\nALL TESTS PASSED SUCCESSFULLY! 🎉');
