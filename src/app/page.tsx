@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { MiniMap } from '../components/MiniMap';
 import { Controls } from '../components/Controls';
+import { KeyboardGuide } from '../components/KeyboardGuide';
 import { usePianoStore } from '../store/pianoStore';
 import { audioEngine } from '../lib/audio';
 import { Play, Sparkles, Keyboard, RotateCcw } from 'lucide-react';
@@ -76,12 +77,15 @@ export default function Home() {
       <div className="relative flex-1 w-full h-full overflow-hidden flex flex-col">
         <DynamicPianoCanvas />
 
+        {/* Desktop Interactive Keyboard Guide */}
+        <KeyboardGuide />
+
         {/* Keyboard Tracker Bar Hint (Desktop / Large Viewport) */}
         {!isMobile && (
           <div className="absolute top-2 left-3 pointer-events-none bg-slate-950/70 backdrop-blur-sm border border-slate-800/80 px-2.5 py-1 rounded text-[11px] font-mono text-slate-400 flex items-center gap-2 z-10">
             <Keyboard size={13} className="text-cyan-400" />
             <span>
-              Tracker Keys: <strong className="text-cyan-300 font-normal">Z–M</strong> (C{keyboardBaseOctave}) / <strong className="text-purple-300 font-normal">Q–U</strong> (C{keyboardBaseOctave + 1}) • <strong className="text-amber-300 font-normal">◄ ►</strong> Octave Shift
+              Tombol PC: <strong className="text-cyan-300 font-normal">Z–M</strong> (C{keyboardBaseOctave}) &amp; <strong className="text-purple-300 font-normal">Q–U</strong> (C{keyboardBaseOctave + 1}) • Geser Oktaf: <strong className="text-amber-300 font-normal">◄ ►</strong>
             </span>
           </div>
         )}
@@ -102,7 +106,7 @@ export default function Home() {
           className="absolute inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex flex-col items-center justify-center cursor-pointer transition-all p-4 select-none"
         >
           <div className="max-w-md w-full bg-slate-900 border border-slate-700/80 rounded-xl p-8 flex flex-col items-center text-center shadow-2xl space-y-6">
-            <div className="w-16 h-16 rounded-full bg-cyan-500/20 border border-cyan-400 flex items-center justify-center text-cyan-300 shadow-[0_0_20px_rgba(6,182,212,0.4)] animate-bounce">
+            <div className="w-16 h-16 rounded-full bg-cyan-500/20 border border-cyan-400 flex items-center justify-center text-cyan-300 shadow-[0_0_20px_rgba(6,182,212,0.4)]">
               <Play size={28} className="translate-x-0.5" />
             </div>
 

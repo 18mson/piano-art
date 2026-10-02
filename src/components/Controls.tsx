@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { usePianoStore } from '../store/pianoStore';
 import { webMidiHandler, MidiDeviceState } from '../lib/input/midi';
-import { Volume2, Music, Sparkles, Sliders, Radio, AlertCircle } from 'lucide-react';
+import { Volume2, Music, Sparkles, Sliders, Radio, AlertCircle, Keyboard } from 'lucide-react';
 
 export const Controls: React.FC = () => {
   const {
@@ -11,6 +11,10 @@ export const Controls: React.FC = () => {
     setOctaves,
     showNoteNames,
     toggleNoteNames,
+    showKeyboardShortcuts,
+    toggleKeyboardShortcuts,
+    showKeyboardGuide,
+    toggleKeyboardGuide,
     sustain,
     toggleSustain,
     audioReady,
@@ -148,6 +152,40 @@ export const Controls: React.FC = () => {
           <Music size={13} className={showNoteNames ? 'text-purple-400' : 'text-slate-500'} />
           Notes
         </button>
+
+        {/* PC Keys On-Canvas Badges Toggle (Desktop) */}
+        {!isMobile && (
+          <button
+            type="button"
+            onClick={toggleKeyboardShortcuts}
+            title="Tampilkan / Sembunyikan Label Huruf Keyboard PC di Tuts Piano"
+            className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono rounded border transition-all ${
+              showKeyboardShortcuts
+                ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50 shadow-[0_0_8px_rgba(6,182,212,0.3)] font-semibold'
+                : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:text-slate-300 hover:bg-slate-800'
+            }`}
+          >
+            <Keyboard size={13} className={showKeyboardShortcuts ? 'text-cyan-400' : 'text-slate-500'} />
+            Tombol PC
+          </button>
+        )}
+
+        {/* PC Keyboard Guide Panel Toggle (Desktop) */}
+        {!isMobile && (
+          <button
+            type="button"
+            onClick={toggleKeyboardGuide}
+            title="Tampilkan / Sembunyikan Panduan Visual Keyboard PC"
+            className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono rounded border transition-all ${
+              showKeyboardGuide
+                ? 'bg-blue-500/20 text-blue-300 border-blue-500/50 shadow-[0_0_8px_rgba(59,130,246,0.3)] font-semibold'
+                : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:text-slate-300 hover:bg-slate-800'
+            }`}
+          >
+            <Sparkles size={13} className={showKeyboardGuide ? 'text-blue-400' : 'text-slate-500'} />
+            Panduan
+          </button>
+        )}
 
         {/* MIDI Connection Indicator */}
         {midiState.isSupported && (

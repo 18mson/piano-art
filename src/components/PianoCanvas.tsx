@@ -7,7 +7,7 @@ import { computePianoLayout, getKeyAtPoint, PianoLayout, KeyLayout } from '../li
 import { getPitchColor, isBlackKey } from '../lib/music';
 import { inputDispatcher } from '../lib/input/dispatcher';
 import { PointerInputHandler } from '../lib/input/pointer';
-import { KeyboardInputHandler } from '../lib/input/keyboard';
+import { KeyboardInputHandler, getKeyboardKeyForMidi } from '../lib/input/keyboard';
 import { ParticleSystem } from '../lib/graphics/particles';
 import { generateStars, renderBackground, renderWhiteKey, renderBlackKey, Star } from '../lib/graphics/assets';
 
@@ -19,6 +19,7 @@ export const PianoCanvas: React.FC = () => {
     octaves,
     startOctave,
     showNoteNames,
+    showKeyboardShortcuts,
     keyboardBaseOctave,
     setKeyboardBaseOctave,
     isAudioStarted,
@@ -29,6 +30,7 @@ export const PianoCanvas: React.FC = () => {
     octaves,
     startOctave,
     showNoteNames,
+    showKeyboardShortcuts,
     keyboardBaseOctave,
   });
 
@@ -37,9 +39,10 @@ export const PianoCanvas: React.FC = () => {
       octaves,
       startOctave,
       showNoteNames,
+      showKeyboardShortcuts,
       keyboardBaseOctave,
     };
-  }, [octaves, startOctave, showNoteNames, keyboardBaseOctave]);
+  }, [octaves, startOctave, showNoteNames, showKeyboardShortcuts, keyboardBaseOctave]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -58,6 +61,7 @@ export const PianoCanvas: React.FC = () => {
     let bgGraphics: Graphics;
     let whiteKeysGraphics: Graphics;
     let blackKeysGraphics: Graphics;
+    let badgesGraphics: Graphics;
     let labelsContainer: Container;
     let particleSystem: ParticleSystem;
 
@@ -74,7 +78,13 @@ export const PianoCanvas: React.FC = () => {
 
     const textPool: Text[] = [];
 
-    const getTextSprite = (index: number, text: string, fontSize: number, color: number): Text => {
+    const getTextSprite = (
+      index: number,
+      text: string,
+      fontSize: number,
+      color: number,
+      fontWeight: string = '600'
+    ): Text => {
       while (textPool.length <= index) {
         const t = new Text({
           text: '',
@@ -93,15 +103,17 @@ export const PianoCanvas: React.FC = () => {
       t.text = text;
       t.style.fontSize = fontSize;
       t.style.fill = color;
+      t.style.fontWeight = fontWeight as any;
       t.visible = true;
       return t;
     };
 
     const redrawKeys = () => {
-      if (!whiteKeysGraphics || !blackKeysGraphics) return;
+      if (!whiteKeysGraphics || !blackKeysGraphics || !badgesGraphics) return;
 
       whiteKeysGraphics.clear();
       blackKeysGraphics.clear();
+      badgesGraphics.clear();
 
       // Hide all texts initially
       textPool.forEach((t) => {
@@ -109,6 +121,8 @@ export const PianoCanvas: React.FC = () => {
       });
 
       const showLabels = storeRef.current.showNoteNames;
+      const showShortcuts = storeRef.current.showKeyboardShortcuts;
+      const baseOctave = storeRef.current.keyboardBaseOctave;
       let textIdx = 0;
 
       // 1. Draw White Keys
@@ -119,13 +133,67 @@ export const PianoCanvas: React.FC = () => {
           const color = getPitchColor(key.midi).hex;
           renderWhiteKey(whiteKeysGraphics, key, isPressed, color);
 
-          if (showLabels && key.width > 14) {
+          const keyBinding = showShortcuts ? getKeyboardKeyForMidi(key.midi, baseOctave) : null;
+
+          if (keyBinding && key.width >= 16) {
+            const isLower = keyBinding.row === 'lower';
+            // Badge dimensions
+            const badgeW = Math.max(16, Math.min(26, Math.floor(key.width * 0.72)));
+            const badgeH = Math.max(16, Math.min(24, Math.floor(badgeW * 0.95)));
+            const badgeX = Math.round(key.x + (key.width - badgeW) / 2);
+            const badgeY = Math.round(key.y + key.height - badgeH - 8);
+            const radius = 4;
+
+            // Draw stylish keycap badge
+            if (isPressed) {
+              badgesGraphics
+                .roundRect(badgeX, badgeY, badgeW, badgeH, radius)
+                .fill({ color: isLower ? 0x0284c7 : 0x7c3aed, alpha: 0.95 });
+              badgesGraphics
+                .roundRect(badgeX, badgeY, badgeW, badgeH, radius)
+                .stroke({ color: 0xffffff, width: 1.5, alpha: 0.9 });
+            } else {
+              badgesGraphics
+                .roundRect(badgeX, badgeY, badgeW, badgeH, radius)
+                .fill({ color: 0x0f172a, alpha: 0.92 });
+              badgesGraphics
+                .roundRect(badgeX, badgeY, badgeW, badgeH, radius)
+                .stroke({ color: isLower ? 0x0284c7 : 0x9333ea, width: 1.2, alpha: 0.75 });
+            }
+
+            // Text sprite for keyboard letter
+            const letterFontSize = Math.max(10, Math.min(13, Math.floor(badgeW * 0.58)));
+            const letterSprite = getTextSprite(
+              textIdx++,
+              keyBinding.keyLabel,
+              letterFontSize,
+              isPressed ? 0xffffff : (isLower ? 0x38bdf8 : 0xd8b4fe),
+              '700'
+            );
+            letterSprite.x = Math.round(badgeX + badgeW / 2);
+            letterSprite.y = Math.round(badgeY + badgeH / 2);
+
+            // Optional note name label above the badge
+            if (showLabels && key.width > 18) {
+              const noteFontSize = Math.max(8, Math.min(10, Math.floor(key.width * 0.32)));
+              const noteSprite = getTextSprite(
+                textIdx++,
+                key.noteName,
+                noteFontSize,
+                isPressed ? 0x0284c7 : 0x64748b,
+                '600'
+              );
+              noteSprite.x = Math.round(key.x + key.width / 2);
+              noteSprite.y = Math.round(badgeY - 10);
+            }
+          } else if (showLabels && key.width > 14) {
             const fontSize = Math.max(9, Math.min(13, Math.floor(key.width * 0.38)));
             const t = getTextSprite(
               textIdx++,
               key.noteName,
               fontSize,
-              isPressed ? 0x0284c7 : 0x64748b
+              isPressed ? 0x0284c7 : 0x64748b,
+              '600'
             );
             t.x = Math.round(key.x + key.width / 2);
             t.y = Math.round(key.y + key.height - 18);
@@ -141,13 +209,65 @@ export const PianoCanvas: React.FC = () => {
           const color = getPitchColor(key.midi).hex;
           renderBlackKey(blackKeysGraphics, key, isPressed, color);
 
-          if (showLabels && key.width >= 12) {
+          const keyBinding = showShortcuts ? getKeyboardKeyForMidi(key.midi, baseOctave) : null;
+
+          if (keyBinding && key.width >= 12) {
+            const isLower = keyBinding.row === 'lower';
+            const badgeW = Math.max(12, Math.min(20, Math.floor(key.width * 0.8)));
+            const badgeH = Math.max(12, Math.min(20, Math.floor(badgeW * 0.95)));
+            const badgeX = Math.round(key.x + (key.width - badgeW) / 2);
+            const badgeY = Math.round(key.y + key.height - badgeH - 6);
+            const radius = 3;
+
+            // Draw black key shortcut badge
+            if (isPressed) {
+              badgesGraphics
+                .roundRect(badgeX, badgeY, badgeW, badgeH, radius)
+                .fill({ color: isLower ? 0x0284c7 : 0x7c3aed, alpha: 0.95 });
+              badgesGraphics
+                .roundRect(badgeX, badgeY, badgeW, badgeH, radius)
+                .stroke({ color: 0xffffff, width: 1.5, alpha: 0.9 });
+            } else {
+              badgesGraphics
+                .roundRect(badgeX, badgeY, badgeW, badgeH, radius)
+                .fill({ color: 0x020617, alpha: 0.9 });
+              badgesGraphics
+                .roundRect(badgeX, badgeY, badgeW, badgeH, radius)
+                .stroke({ color: isLower ? 0x38bdf8 : 0xc084fc, width: 1.2, alpha: 0.8 });
+            }
+
+            const letterFontSize = Math.max(8, Math.min(11, Math.floor(badgeW * 0.6)));
+            const letterSprite = getTextSprite(
+              textIdx++,
+              keyBinding.keyLabel,
+              letterFontSize,
+              isPressed ? 0xffffff : (isLower ? 0x38bdf8 : 0xf0abfc),
+              '700'
+            );
+            letterSprite.x = Math.round(badgeX + badgeW / 2);
+            letterSprite.y = Math.round(badgeY + badgeH / 2);
+
+            // Optional note name label above the badge
+            if (showLabels && key.width >= 16) {
+              const noteFontSize = Math.max(7, Math.min(9, Math.floor(key.width * 0.34)));
+              const noteSprite = getTextSprite(
+                textIdx++,
+                key.noteName,
+                noteFontSize,
+                isPressed ? 0x38bdf8 : 0x94a3b8,
+                '600'
+              );
+              noteSprite.x = Math.round(key.x + key.width / 2);
+              noteSprite.y = Math.round(badgeY - 9);
+            }
+          } else if (showLabels && key.width >= 12) {
             const fontSize = Math.max(8, Math.min(10, Math.floor(key.width * 0.42)));
             const t = getTextSprite(
               textIdx++,
               key.noteName,
               fontSize,
-              isPressed ? 0x38bdf8 : 0x94a3b8
+              isPressed ? 0x38bdf8 : 0x94a3b8,
+              '600'
             );
             t.x = Math.round(key.x + key.width / 2);
             t.y = Math.round(key.y + key.height - 14);
@@ -160,6 +280,10 @@ export const PianoCanvas: React.FC = () => {
       const width = container.clientWidth || window.innerWidth;
       const height = container.clientHeight || window.innerHeight;
       if (width === 0 || height === 0) return;
+
+      if (keyboardHandler) {
+        keyboardHandler.setBaseOctave(storeRef.current.keyboardBaseOctave);
+      }
 
       const newTarget = computePianoLayout({
         screenWidth: width,
@@ -279,12 +403,14 @@ export const PianoCanvas: React.FC = () => {
       bgGraphics = new Graphics();
       whiteKeysGraphics = new Graphics();
       blackKeysGraphics = new Graphics();
+      badgesGraphics = new Graphics();
       labelsContainer = new Container();
       particleSystem = new ParticleSystem();
 
       pixiApp.stage.addChild(bgGraphics);
       pixiApp.stage.addChild(whiteKeysGraphics);
       pixiApp.stage.addChild(blackKeysGraphics);
+      pixiApp.stage.addChild(badgesGraphics);
       pixiApp.stage.addChild(labelsContainer);
       pixiApp.stage.addChild(particleSystem.container);
 
@@ -366,9 +492,17 @@ export const PianoCanvas: React.FC = () => {
         updateLayout(true);
       };
 
+      const handleRedrawOnly = () => {
+        if (keyboardHandler) {
+          keyboardHandler.setBaseOctave(storeRef.current.keyboardBaseOctave);
+        }
+        redrawKeys();
+      };
+
       window.addEventListener('resize', handleResize);
       window.addEventListener('orientationchange', handleResize);
       window.addEventListener('piano:update-layout', handleCustomLayout);
+      window.addEventListener('piano:redraw-keys', handleRedrawOnly);
 
       // Store cleanup function
       return () => {
@@ -377,6 +511,7 @@ export const PianoCanvas: React.FC = () => {
         window.removeEventListener('resize', handleResize);
         window.removeEventListener('orientationchange', handleResize);
         window.removeEventListener('piano:update-layout', handleCustomLayout);
+        window.removeEventListener('piano:redraw-keys', handleRedrawOnly);
       };
     };
 
@@ -400,7 +535,13 @@ export const PianoCanvas: React.FC = () => {
     // Dispatch custom layout update event inside canvas
     const event = new CustomEvent('piano:update-layout');
     window.dispatchEvent(event);
-  }, [octaves, startOctave, showNoteNames]);
+  }, [octaves, startOctave]);
+
+  // Redraw keys when labels, keyboard base octave, or shortcuts toggle change
+  useEffect(() => {
+    const event = new CustomEvent('piano:redraw-keys');
+    window.dispatchEvent(event);
+  }, [showNoteNames, showKeyboardShortcuts, keyboardBaseOctave]);
 
   return (
     <div
