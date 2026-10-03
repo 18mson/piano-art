@@ -287,12 +287,16 @@ export const PianoCanvas: React.FC = () => {
         keyboardHandler.setBaseOctave(storeRef.current.keyboardBaseOctave);
       }
 
+      const isMobilePortrait = height > width && width < 768;
+      const isMobileLandscape = width > height && height < 500;
+      const heightRatio = isMobilePortrait ? 0.74 : (isMobileLandscape ? 0.72 : 0.62);
+
       const newTarget = computePianoLayout({
         screenWidth: width,
         screenHeight: height,
         octaves: storeRef.current.octaves,
         startOctave: storeRef.current.startOctave,
-        pianoHeightRatio: 0.62,
+        pianoHeightRatio: heightRatio,
       });
 
       if (!activeLayoutRef.current || !animate) {

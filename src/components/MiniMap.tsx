@@ -155,7 +155,7 @@ export const MiniMap: React.FC = () => {
   }, []);
 
   return (
-    <div className="w-full bg-slate-950/80 backdrop-blur-md border-b border-slate-800/80 select-none flex items-center px-2 py-1 gap-2 z-20">
+    <div className="w-full bg-slate-950/80 backdrop-blur-md border-b border-slate-800/80 select-none flex items-center px-2 py-1 gap-2 z-20 safe-p-left safe-p-right">
       {/* Shift Left Button */}
       <button
         type="button"

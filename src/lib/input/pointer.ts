@@ -12,8 +12,10 @@ export class PointerInputHandler {
 
     const getCanvasCoords = (e: PointerEvent) => {
       const rect = element.getBoundingClientRect();
-      const scaleX = element.clientWidth ? (element as HTMLCanvasElement).width / element.clientWidth : 1;
-      const scaleY = element.clientHeight ? (element as HTMLCanvasElement).height / element.clientHeight : 1;
+      const clientW = element.clientWidth || rect.width;
+      const clientH = element.clientHeight || rect.height;
+      const scaleX = rect.width > 0 ? clientW / rect.width : 1;
+      const scaleY = rect.height > 0 ? clientH / rect.height : 1;
       return {
         x: (e.clientX - rect.left) * scaleX,
         y: (e.clientY - rect.top) * scaleY,
@@ -47,8 +49,10 @@ export class PointerInputHandler {
       const { x, y } = getCanvasCoords(e);
       this.pointerPositions.set(e.pointerId, { x, y });
 
-      if (this.activePointers.has(e.pointerId)) {
-        const currentMidi = this.activePointers.get(e.pointerId);
+      const currentMidi = this.activePointers.get(e.pointerId);
+      const isDown = this.activePointers.has(e.pointerId) || e.pointerType === 'touch' || e.buttons > 0;
+
+      if (isDown) {
         const key = getKeyAtPoint(x, y, layout);
 
         if (key && key.midi !== currentMidi) {
@@ -103,6 +107,7 @@ export class PointerInputHandler {
     element.addEventListener('pointerup', onPointerUp);
     element.addEventListener('pointercancel', onPointerCancel);
     element.addEventListener('lostpointercapture', onLostPointerCapture);
+    window.addEventListener('pointerup', onPointerUp);
     window.addEventListener('blur', onWindowBlur);
     document.addEventListener('visibilitychange', onVisibilityChange);
 
@@ -112,6 +117,7 @@ export class PointerInputHandler {
       element.removeEventListener('pointerup', onPointerUp);
       element.removeEventListener('pointercancel', onPointerCancel);
       element.removeEventListener('lostpointercapture', onLostPointerCapture);
+      window.removeEventListener('pointerup', onPointerUp);
       window.removeEventListener('blur', onWindowBlur);
       document.removeEventListener('visibilitychange', onVisibilityChange);
       this.releaseAll();

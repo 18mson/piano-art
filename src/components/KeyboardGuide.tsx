@@ -111,7 +111,7 @@ export const KeyboardGuide: React.FC = () => {
   return (
     <aside
       aria-label="Panduan Tombol Keyboard PC"
-      className="absolute bottom-2 left-1/2 -translate-x-1/2 z-30 max-w-4xl w-[95%] sm:w-auto bg-slate-950/90 backdrop-blur-md border border-slate-800 rounded-xl shadow-2xl p-3 text-slate-200 select-none transition-all duration-200"
+      className="absolute top-10 left-1/2 -translate-x-1/2 z-30 max-w-4xl w-[95%] sm:w-auto bg-slate-950/90 backdrop-blur-md border border-slate-800 rounded-xl shadow-2xl p-3 text-slate-200 select-none transition-all duration-200"
     >
       {/* Header bar */}
       <header className="flex items-center justify-between gap-3 pb-2 border-b border-slate-800/80">

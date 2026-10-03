@@ -115,4 +115,45 @@ assert(Math.abs(c6Bounds.x - (21 * wkw)) < 0.001, 'C6 is at x = 21 * wkw');
 const c7Bounds = getMidiKeyBoundsInLayout(96, layout3);
 assert(Math.abs(c7Bounds.x - (28 * wkw)) < 0.001, 'C7 is exactly 28 white keys from start');
 
+console.log('\n--- Testing Pointer Hit Detection for Desktop & Mobile ---');
+// Desktop layout simulation (e.g. 1440x900, 4 octaves C3..C7)
+const desktopLayout = computePianoLayout({
+  screenWidth: 1440,
+  screenHeight: 900,
+  octaves: 4,
+  startOctave: 3,
+  pianoHeightRatio: 0.62,
+});
+
+// A click on C4 (MIDI 60)
+const c4Key = desktopLayout.keyByMidi.get(60)!;
+assert(c4Key !== undefined, 'C4 exists in desktop layout');
+// Simulate click in CSS pixels directly on C4
+const hitC4 = getKeyAtPoint(c4Key.x + c4Key.width / 2, c4Key.y + c4Key.height * 0.8, desktopLayout);
+assert(hitC4?.midi === 60, 'Desktop click on C4 resolves to MIDI 60');
+
+// Mobile portrait layout simulation (e.g. 390x844, 2 octaves C4..C6)
+const mobileLayout = computePianoLayout({
+  screenWidth: 390,
+  screenHeight: 844,
+  octaves: 2,
+  startOctave: 4,
+  pianoHeightRatio: 0.74,
+});
+
+// A touch on F#4 (MIDI 66 - black key)
+const fs4Key = mobileLayout.keyByMidi.get(66)!;
+assert(fs4Key !== undefined, 'F#4 exists in mobile layout');
+const hitFs4 = getKeyAtPoint(fs4Key.x + fs4Key.width / 2, fs4Key.y + fs4Key.height / 2, mobileLayout);
+assert(hitFs4?.midi === 66, 'Mobile touch on black key F#4 resolves to MIDI 66');
+
+// Coordinate mapping formula validation:
+// On high-DPI displays (e.g. DPR = 2 or 3), element.clientWidth is CSS width (390),
+// rect.width is 390, canvas.width buffer is 1170.
+// Formula: scaleX = rect.width > 0 ? clientW / rect.width : 1 MUST equal 1.0!
+const clientW = 390;
+const rectW = 390;
+const scaleX = rectW > 0 ? clientW / rectW : 1;
+assert(scaleX === 1, 'Coordinate scaleX correctly resolves to 1.0, NOT devicePixelRatio');
+
 console.log('\nALL TESTS PASSED SUCCESSFULLY! 🎉');

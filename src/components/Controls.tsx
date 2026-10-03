@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { usePianoStore } from '../store/pianoStore';
 import { webMidiHandler, MidiDeviceState } from '../lib/input/midi';
-import { Volume2, Music, Sparkles, Sliders, Radio, AlertCircle, Keyboard } from 'lucide-react';
+import { Volume2, Music, Sparkles, Sliders, Radio, AlertCircle, Keyboard, Maximize, Minimize } from 'lucide-react';
 
 export const Controls: React.FC = () => {
   const {
@@ -23,6 +23,8 @@ export const Controls: React.FC = () => {
   } = usePianoStore();
 
   const [windowWidth, setWindowWidth] = useState(1024);
+  const [isPortrait, setIsPortrait] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [midiState, setMidiState] = useState<MidiDeviceState>({
     isSupported: false,
     isConnected: false,
@@ -31,14 +33,18 @@ export const Controls: React.FC = () => {
   useEffect(() => {
     const handleResize = () => {
       const w = window.innerWidth;
+      const h = window.innerHeight;
       setWindowWidth(w);
       const mobile = w < 768 || window.matchMedia('(pointer: coarse)').matches;
       setIsMobile(mobile);
+      setIsPortrait(h > w && mobile);
+      setIsFullscreen(!!document.fullscreenElement);
     };
 
     handleResize();
     window.addEventListener('resize', handleResize);
     window.addEventListener('orientationchange', handleResize);
+    document.addEventListener('fullscreenchange', handleResize);
 
     const unsubMidi = webMidiHandler.subscribe((state) => {
       setMidiState(state);
@@ -48,12 +54,40 @@ export const Controls: React.FC = () => {
     return () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('orientationchange', handleResize);
+      document.removeEventListener('fullscreenchange', handleResize);
       unsubMidi();
     };
   }, [setIsMobile]);
 
+  const toggleFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        if (document.documentElement.requestFullscreen) {
+          await document.documentElement.requestFullscreen();
+        }
+        setIsFullscreen(true);
+        if ('orientation' in screen && 'lock' in (screen.orientation as any)) {
+          try {
+            await (screen.orientation as any).lock('landscape');
+          } catch {}
+        }
+      } else {
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        }
+        setIsFullscreen(false);
+      }
+    } catch (e) {
+      console.warn('Fullscreen toggle failed:', e);
+    }
+  };
+
   // Options configuration
-  const mobileOptions: (number | 'all')[] = [1, 2, 3, 4];
+  // For mobile portrait (vertical): 1, 2, 3 octaves gives comfortable touch targets
+  // For mobile landscape (miring): 1, 2, 3, 4, 5 octaves
+  const mobilePortraitOptions: (number | 'all')[] = [1, 2, 3];
+  const mobileLandscapeOptions: (number | 'all')[] = [1, 2, 3, 4, 5];
+  const mobileOptions: (number | 'all')[] = isPortrait ? mobilePortraitOptions : mobileLandscapeOptions;
   const desktopOptions: (number | 'all')[] = [1, 2, 3, 4, 5, 6, 7, 'all'];
   const options = isMobile ? mobileOptions : desktopOptions;
 
@@ -69,7 +103,7 @@ export const Controls: React.FC = () => {
   const isWidthNarrow = currentKeyWidth < minKeyWidth;
 
   return (
-    <div className="w-full bg-slate-950/90 backdrop-blur-md px-3 py-2 border-b border-slate-800 text-slate-200 flex flex-wrap items-center justify-between gap-2 z-20 select-none">
+    <div className="w-full bg-slate-950/90 backdrop-blur-md px-3 py-1.5 border-b border-slate-800 text-slate-200 flex flex-wrap items-center justify-between gap-2 z-20 select-none safe-p-left safe-p-right">
       {/* Left: Octave Selection & Warning */}
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs font-mono font-medium text-slate-400 uppercase tracking-wider flex items-center gap-1">
@@ -184,6 +218,23 @@ export const Controls: React.FC = () => {
           >
             <Sparkles size={13} className={showKeyboardGuide ? 'text-blue-400' : 'text-slate-500'} />
             Panduan
+          </button>
+        )}
+
+        {/* Fullscreen / Rotate Toggle for Mobile */}
+        {isMobile && (
+          <button
+            type="button"
+            onClick={toggleFullscreen}
+            title={isFullscreen ? 'Keluar Fullscreen' : (isPortrait ? 'Putar ke Layar Penuh Landscape (Miring)' : 'Layar Penuh')}
+            className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono rounded border transition-all ${
+              isFullscreen
+                ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50 shadow-[0_0_8px_rgba(6,182,212,0.3)] font-semibold'
+                : 'bg-slate-900/80 text-slate-300 border-slate-700 hover:text-white hover:bg-slate-800'
+            }`}
+          >
+            {isFullscreen ? <Minimize size={13} /> : <Maximize size={13} />}
+            <span>{isPortrait ? 'Miring' : 'Full'}</span>
           </button>
         )}
 

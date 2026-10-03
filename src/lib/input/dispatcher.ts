@@ -23,6 +23,10 @@ class InputDispatcher {
     // Check bounds (A0 = 21, C8 = 108)
     if (midi < 21 || midi > 108) return;
 
+    if (!audioEngine.getState().isInitialized) {
+      audioEngine.initAudio().catch(() => {});
+    }
+
     this.activeNotes.add(midi);
     audioEngine.noteOn(midi, velocity);
 

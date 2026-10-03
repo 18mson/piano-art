@@ -20,9 +20,25 @@ body {
   padding: 0;
   width: 100%;
   height: 100%;
+  height: 100dvh;
   overflow: hidden;
+  overscroll-behavior: none;
   background-color: #090d16;
   color: #f8fafc;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   touch-action: none;
+}
+
+/* Safe area padding utilities for notched phones in landscape & portrait */
+.safe-p-top {
+  padding-top: max(4px, env(safe-area-inset-top));
+}
+.safe-p-bottom {
+  padding-bottom: max(4px, env(safe-area-inset-bottom));
+}
+.safe-p-left {
+  padding-left: max(8px, env(safe-area-inset-left));
+}
+.safe-p-right {
+  padding-right: max(8px, env(safe-area-inset-right));
 }

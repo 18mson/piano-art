@@ -89,21 +89,14 @@ export default function Home() {
             </span>
           </div>
         )}
-
-        {/* Portrait Mode Advisory Hint */}
-        {isPortrait && (
-          <div className="absolute top-16 left-1/2 -translate-x-1/2 bg-amber-500/20 border border-amber-500/60 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-mono text-amber-300 flex items-center gap-2 shadow-lg animate-pulse z-30 pointer-events-none">
-            <RotateCcw size={14} />
-            <span>Rotate to landscape for the best piano experience</span>
-          </div>
-        )}
       </div>
 
       {/* Initial User Gesture Audio Overlay */}
       {!isAudioStarted && (
         <div
           onClick={handleStartAudio}
-          className="absolute inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex flex-col items-center justify-center cursor-pointer transition-all p-4 select-none"
+          onTouchStart={handleStartAudio}
+          className="absolute inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex flex-col items-center justify-center cursor-pointer transition-all p-4 select-none touch-none"
         >
           <div className="max-w-md w-full bg-slate-900 border border-slate-700/80 rounded-xl p-8 flex flex-col items-center text-center shadow-2xl space-y-6">
             <div className="w-16 h-16 rounded-full bg-cyan-500/20 border border-cyan-400 flex items-center justify-center text-cyan-300 shadow-[0_0_20px_rgba(6,182,212,0.4)]">
