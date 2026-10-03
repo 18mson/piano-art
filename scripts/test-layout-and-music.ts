@@ -170,4 +170,38 @@ const rectW = 390;
 const scaleX = rectW > 0 ? clientW / rectW : 1;
 assert(scaleX === 1, 'Coordinate scaleX correctly resolves to 1.0, NOT devicePixelRatio');
 
+console.log('\n--- Testing Swapped Keyboard Layout (QWERTY lower, VBNM,./ upper) ---');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { getKeyboardKeyForMidi, KEY_MAP } = require('../src/lib/input/keyboard');
+
+// Base octave C3 = MIDI 48
+const c3Binding = getKeyboardKeyForMidi(48, 3);
+assert(c3Binding?.keyLabel === 'Q', 'Lower C (C3) is mapped to Q');
+
+const cs3Binding = getKeyboardKeyForMidi(49, 3);
+assert(cs3Binding?.keyLabel === '2', 'Lower C# (C#3) is mapped to 2');
+
+const b3Binding = getKeyboardKeyForMidi(59, 3);
+assert(b3Binding?.keyLabel === 'U', 'Lower B (B3) is mapped to U');
+
+// Upper octave C4 = MIDI 60
+const c4Binding = getKeyboardKeyForMidi(60, 3);
+assert(c4Binding?.keyLabel === 'V', 'Upper C (C4) is mapped to V');
+
+const cs4Binding = getKeyboardKeyForMidi(61, 3);
+assert(cs4Binding?.keyLabel === 'G', 'Upper C# (C#4) is mapped to G');
+
+const g4Binding = getKeyboardKeyForMidi(67, 3);
+assert(g4Binding?.keyLabel === ',', 'Upper G (G4) is mapped to comma (,)');
+
+const as4Binding = getKeyboardKeyForMidi(70, 3);
+assert(as4Binding?.keyLabel === ';', 'Upper A# (A#4) is mapped to semicolon (;)');
+
+const b4Binding = getKeyboardKeyForMidi(71, 3);
+assert(b4Binding?.keyLabel === '/', 'Upper B (B4) is mapped to slash (/)');
+
+assert(KEY_MAP['KeyQ'] === 0, 'KEY_MAP: KeyQ is offset 0');
+assert(KEY_MAP['KeyV'] === 12, 'KEY_MAP: KeyV is offset 12');
+assert(KEY_MAP['Slash'] === 23, 'KEY_MAP: Slash is offset 23');
+
 console.log('\nALL TESTS PASSED SUCCESSFULLY! 🎉');

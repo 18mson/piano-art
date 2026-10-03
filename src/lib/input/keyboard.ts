@@ -1,34 +1,36 @@
 import { inputDispatcher } from './dispatcher';
 
-// Tracker layout semitone offsets relative to base octave C note (0..23)
+// Keyboard semitone offsets relative to base octave C note (0..23)
+// Lower octave (C rendah): QWERTY row (Q..U, 2..7)
+// Higher octave (C di atasnya): Bottom row shifted (V.. /, G.. ;)
 export const KEY_MAP: Record<string, number> = {
-  // Lower row (base octave)
-  KeyZ: 0,  // C
-  KeyS: 1,  // C#
-  KeyX: 2,  // D
-  KeyD: 3,  // D#
-  KeyC: 4,  // E
-  KeyV: 5,  // F
-  KeyG: 6,  // F#
-  KeyB: 7,  // G
-  KeyH: 8,  // G#
-  KeyN: 9,  // A
-  KeyJ: 10, // A#
-  KeyM: 11, // B
+  // Lower octave (QWERTY row) - C{baseOctave}
+  KeyQ: 0,   // C
+  Digit2: 1, // C#
+  KeyW: 2,   // D
+  Digit3: 3, // D#
+  KeyE: 4,   // E
+  KeyR: 5,   // F
+  Digit5: 6, // F#
+  KeyT: 7,   // G
+  Digit6: 8, // G#
+  KeyY: 9,   // A
+  Digit7: 10,// A#
+  KeyU: 11,  // B
 
-  // Upper row (base octave + 1)
-  KeyQ: 12, // C
-  Digit2: 13, // C#
-  KeyW: 14, // D
-  Digit3: 15, // D#
-  KeyE: 16, // E
-  KeyR: 17, // F
-  Digit5: 18, // F#
-  KeyT: 19, // G
-  Digit6: 20, // G#
-  KeyY: 21, // A
-  Digit7: 22, // A#
-  KeyU: 23, // B
+  // Higher octave (Bottom row: VBNM,./ and black keys G H K L ;) - C{baseOctave + 1}
+  KeyV: 12,      // C
+  KeyG: 13,      // C#
+  KeyB: 14,      // D
+  KeyH: 15,      // D#
+  KeyN: 16,      // E
+  KeyM: 17,      // F
+  KeyK: 18,      // F#
+  Comma: 19,     // G
+  KeyL: 20,      // G#
+  Period: 21,    // A
+  Semicolon: 22, // A#
+  Slash: 23,     // B
 };
 
 export interface KeyBindingInfo {
@@ -42,33 +44,33 @@ export interface KeyBindingInfo {
 }
 
 export const OFFSET_TO_KEY_BINDING: Record<number, KeyBindingInfo> = {
-  // Lower row (base octave)
-  0: { offset: 0, code: 'KeyZ', keyLabel: 'Z', noteNameWithoutOctave: 'C', row: 'lower', isBlack: false, octaveOffset: 0 },
-  1: { offset: 1, code: 'KeyS', keyLabel: 'S', noteNameWithoutOctave: 'C#', row: 'lower', isBlack: true, octaveOffset: 0 },
-  2: { offset: 2, code: 'KeyX', keyLabel: 'X', noteNameWithoutOctave: 'D', row: 'lower', isBlack: false, octaveOffset: 0 },
-  3: { offset: 3, code: 'KeyD', keyLabel: 'D', noteNameWithoutOctave: 'D#', row: 'lower', isBlack: true, octaveOffset: 0 },
-  4: { offset: 4, code: 'KeyC', keyLabel: 'C', noteNameWithoutOctave: 'E', row: 'lower', isBlack: false, octaveOffset: 0 },
-  5: { offset: 5, code: 'KeyV', keyLabel: 'V', noteNameWithoutOctave: 'F', row: 'lower', isBlack: false, octaveOffset: 0 },
-  6: { offset: 6, code: 'KeyG', keyLabel: 'G', noteNameWithoutOctave: 'F#', row: 'lower', isBlack: true, octaveOffset: 0 },
-  7: { offset: 7, code: 'KeyB', keyLabel: 'B', noteNameWithoutOctave: 'G', row: 'lower', isBlack: false, octaveOffset: 0 },
-  8: { offset: 8, code: 'KeyH', keyLabel: 'H', noteNameWithoutOctave: 'G#', row: 'lower', isBlack: true, octaveOffset: 0 },
-  9: { offset: 9, code: 'KeyN', keyLabel: 'N', noteNameWithoutOctave: 'A', row: 'lower', isBlack: false, octaveOffset: 0 },
-  10: { offset: 10, code: 'KeyJ', keyLabel: 'J', noteNameWithoutOctave: 'A#', row: 'lower', isBlack: true, octaveOffset: 0 },
-  11: { offset: 11, code: 'KeyM', keyLabel: 'M', noteNameWithoutOctave: 'B', row: 'lower', isBlack: false, octaveOffset: 0 },
+  // Lower octave (QWERTY - base octave)
+  0: { offset: 0, code: 'KeyQ', keyLabel: 'Q', noteNameWithoutOctave: 'C', row: 'lower', isBlack: false, octaveOffset: 0 },
+  1: { offset: 1, code: 'Digit2', keyLabel: '2', noteNameWithoutOctave: 'C#', row: 'lower', isBlack: true, octaveOffset: 0 },
+  2: { offset: 2, code: 'KeyW', keyLabel: 'W', noteNameWithoutOctave: 'D', row: 'lower', isBlack: false, octaveOffset: 0 },
+  3: { offset: 3, code: 'Digit3', keyLabel: '3', noteNameWithoutOctave: 'D#', row: 'lower', isBlack: true, octaveOffset: 0 },
+  4: { offset: 4, code: 'KeyE', keyLabel: 'E', noteNameWithoutOctave: 'E', row: 'lower', isBlack: false, octaveOffset: 0 },
+  5: { offset: 5, code: 'KeyR', keyLabel: 'R', noteNameWithoutOctave: 'F', row: 'lower', isBlack: false, octaveOffset: 0 },
+  6: { offset: 6, code: 'Digit5', keyLabel: '5', noteNameWithoutOctave: 'F#', row: 'lower', isBlack: true, octaveOffset: 0 },
+  7: { offset: 7, code: 'KeyT', keyLabel: 'T', noteNameWithoutOctave: 'G', row: 'lower', isBlack: false, octaveOffset: 0 },
+  8: { offset: 8, code: 'Digit6', keyLabel: '6', noteNameWithoutOctave: 'G#', row: 'lower', isBlack: true, octaveOffset: 0 },
+  9: { offset: 9, code: 'KeyY', keyLabel: 'Y', noteNameWithoutOctave: 'A', row: 'lower', isBlack: false, octaveOffset: 0 },
+  10: { offset: 10, code: 'Digit7', keyLabel: '7', noteNameWithoutOctave: 'A#', row: 'lower', isBlack: true, octaveOffset: 0 },
+  11: { offset: 11, code: 'KeyU', keyLabel: 'U', noteNameWithoutOctave: 'B', row: 'lower', isBlack: false, octaveOffset: 0 },
 
-  // Upper row (base octave + 1)
-  12: { offset: 12, code: 'KeyQ', keyLabel: 'Q', noteNameWithoutOctave: 'C', row: 'upper', isBlack: false, octaveOffset: 1 },
-  13: { offset: 13, code: 'Digit2', keyLabel: '2', noteNameWithoutOctave: 'C#', row: 'upper', isBlack: true, octaveOffset: 1 },
-  14: { offset: 14, code: 'KeyW', keyLabel: 'W', noteNameWithoutOctave: 'D', row: 'upper', isBlack: false, octaveOffset: 1 },
-  15: { offset: 15, code: 'Digit3', keyLabel: '3', noteNameWithoutOctave: 'D#', row: 'upper', isBlack: true, octaveOffset: 1 },
-  16: { offset: 16, code: 'KeyE', keyLabel: 'E', noteNameWithoutOctave: 'E', row: 'upper', isBlack: false, octaveOffset: 1 },
-  17: { offset: 17, code: 'KeyR', keyLabel: 'R', noteNameWithoutOctave: 'F', row: 'upper', isBlack: false, octaveOffset: 1 },
-  18: { offset: 18, code: 'Digit5', keyLabel: '5', noteNameWithoutOctave: 'F#', row: 'upper', isBlack: true, octaveOffset: 1 },
-  19: { offset: 19, code: 'KeyT', keyLabel: 'T', noteNameWithoutOctave: 'G', row: 'upper', isBlack: false, octaveOffset: 1 },
-  20: { offset: 20, code: 'Digit6', keyLabel: '6', noteNameWithoutOctave: 'G#', row: 'upper', isBlack: true, octaveOffset: 1 },
-  21: { offset: 21, code: 'KeyY', keyLabel: 'Y', noteNameWithoutOctave: 'A', row: 'upper', isBlack: false, octaveOffset: 1 },
-  22: { offset: 22, code: 'Digit7', keyLabel: '7', noteNameWithoutOctave: 'A#', row: 'upper', isBlack: true, octaveOffset: 1 },
-  23: { offset: 23, code: 'KeyU', keyLabel: 'U', noteNameWithoutOctave: 'B', row: 'upper', isBlack: false, octaveOffset: 1 },
+  // Higher octave (VBNM,./ - base octave + 1)
+  12: { offset: 12, code: 'KeyV', keyLabel: 'V', noteNameWithoutOctave: 'C', row: 'upper', isBlack: false, octaveOffset: 1 },
+  13: { offset: 13, code: 'KeyG', keyLabel: 'G', noteNameWithoutOctave: 'C#', row: 'upper', isBlack: true, octaveOffset: 1 },
+  14: { offset: 14, code: 'KeyB', keyLabel: 'B', noteNameWithoutOctave: 'D', row: 'upper', isBlack: false, octaveOffset: 1 },
+  15: { offset: 15, code: 'KeyH', keyLabel: 'H', noteNameWithoutOctave: 'D#', row: 'upper', isBlack: true, octaveOffset: 1 },
+  16: { offset: 16, code: 'KeyN', keyLabel: 'N', noteNameWithoutOctave: 'E', row: 'upper', isBlack: false, octaveOffset: 1 },
+  17: { offset: 17, code: 'KeyM', keyLabel: 'M', noteNameWithoutOctave: 'F', row: 'upper', isBlack: false, octaveOffset: 1 },
+  18: { offset: 18, code: 'KeyK', keyLabel: 'K', noteNameWithoutOctave: 'F#', row: 'upper', isBlack: true, octaveOffset: 1 },
+  19: { offset: 19, code: 'Comma', keyLabel: ',', noteNameWithoutOctave: 'G', row: 'upper', isBlack: false, octaveOffset: 1 },
+  20: { offset: 20, code: 'KeyL', keyLabel: 'L', noteNameWithoutOctave: 'G#', row: 'upper', isBlack: true, octaveOffset: 1 },
+  21: { offset: 21, code: 'Period', keyLabel: '.', noteNameWithoutOctave: 'A', row: 'upper', isBlack: false, octaveOffset: 1 },
+  22: { offset: 22, code: 'Semicolon', keyLabel: ';', noteNameWithoutOctave: 'A#', row: 'upper', isBlack: true, octaveOffset: 1 },
+  23: { offset: 23, code: 'Slash', keyLabel: '/', noteNameWithoutOctave: 'B', row: 'upper', isBlack: false, octaveOffset: 1 },
 };
 
 /**

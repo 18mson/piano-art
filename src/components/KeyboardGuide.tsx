@@ -14,44 +14,44 @@ interface KeyCapDef {
   row: 'upper' | 'lower';
 }
 
-const UPPER_KEYS: KeyCapDef[] = [
-  // White keys
-  { code: 'KeyQ', keyLabel: 'Q', note: 'C', isBlack: false, offset: 12, row: 'upper' },
-  { code: 'KeyW', keyLabel: 'W', note: 'D', isBlack: false, offset: 14, row: 'upper' },
-  { code: 'KeyE', keyLabel: 'E', note: 'E', isBlack: false, offset: 16, row: 'upper' },
-  { code: 'KeyR', keyLabel: 'R', note: 'F', isBlack: false, offset: 17, row: 'upper' },
-  { code: 'KeyT', keyLabel: 'T', note: 'G', isBlack: false, offset: 19, row: 'upper' },
-  { code: 'KeyY', keyLabel: 'Y', note: 'A', isBlack: false, offset: 21, row: 'upper' },
-  { code: 'KeyU', keyLabel: 'U', note: 'B', isBlack: false, offset: 23, row: 'upper' },
-];
-
-const UPPER_BLACK_KEYS: (KeyCapDef | null)[] = [
-  { code: 'Digit2', keyLabel: '2', note: 'C#', isBlack: true, offset: 13, row: 'upper' },
-  { code: 'Digit3', keyLabel: '3', note: 'D#', isBlack: true, offset: 15, row: 'upper' },
-  null, // gap between D# and F#
-  { code: 'Digit5', keyLabel: '5', note: 'F#', isBlack: true, offset: 18, row: 'upper' },
-  { code: 'Digit6', keyLabel: '6', note: 'G#', isBlack: true, offset: 20, row: 'upper' },
-  { code: 'Digit7', keyLabel: '7', note: 'A#', isBlack: true, offset: 22, row: 'upper' },
-];
-
+// Lower Octave (C rendah): QWERTY Row (offsets 0..11)
 const LOWER_KEYS: KeyCapDef[] = [
-  // White keys
-  { code: 'KeyZ', keyLabel: 'Z', note: 'C', isBlack: false, offset: 0, row: 'lower' },
-  { code: 'KeyX', keyLabel: 'X', note: 'D', isBlack: false, offset: 2, row: 'lower' },
-  { code: 'KeyC', keyLabel: 'C', note: 'E', isBlack: false, offset: 4, row: 'lower' },
-  { code: 'KeyV', keyLabel: 'V', note: 'F', isBlack: false, offset: 5, row: 'lower' },
-  { code: 'KeyB', keyLabel: 'B', note: 'G', isBlack: false, offset: 7, row: 'lower' },
-  { code: 'KeyN', keyLabel: 'N', note: 'A', isBlack: false, offset: 9, row: 'lower' },
-  { code: 'KeyM', keyLabel: 'M', note: 'B', isBlack: false, offset: 11, row: 'lower' },
+  { code: 'KeyQ', keyLabel: 'Q', note: 'C', isBlack: false, offset: 0, row: 'lower' },
+  { code: 'KeyW', keyLabel: 'W', note: 'D', isBlack: false, offset: 2, row: 'lower' },
+  { code: 'KeyE', keyLabel: 'E', note: 'E', isBlack: false, offset: 4, row: 'lower' },
+  { code: 'KeyR', keyLabel: 'R', note: 'F', isBlack: false, offset: 5, row: 'lower' },
+  { code: 'KeyT', keyLabel: 'T', note: 'G', isBlack: false, offset: 7, row: 'lower' },
+  { code: 'KeyY', keyLabel: 'Y', note: 'A', isBlack: false, offset: 9, row: 'lower' },
+  { code: 'KeyU', keyLabel: 'U', note: 'B', isBlack: false, offset: 11, row: 'lower' },
 ];
 
 const LOWER_BLACK_KEYS: (KeyCapDef | null)[] = [
-  { code: 'KeyS', keyLabel: 'S', note: 'C#', isBlack: true, offset: 1, row: 'lower' },
-  { code: 'KeyD', keyLabel: 'D', note: 'D#', isBlack: true, offset: 3, row: 'lower' },
+  { code: 'Digit2', keyLabel: '2', note: 'C#', isBlack: true, offset: 1, row: 'lower' },
+  { code: 'Digit3', keyLabel: '3', note: 'D#', isBlack: true, offset: 3, row: 'lower' },
   null, // gap between D# and F#
-  { code: 'KeyG', keyLabel: 'G', note: 'F#', isBlack: true, offset: 6, row: 'lower' },
-  { code: 'KeyH', keyLabel: 'H', note: 'G#', isBlack: true, offset: 8, row: 'lower' },
-  { code: 'KeyJ', keyLabel: 'J', note: 'A#', isBlack: true, offset: 10, row: 'lower' },
+  { code: 'Digit5', keyLabel: '5', note: 'F#', isBlack: true, offset: 6, row: 'lower' },
+  { code: 'Digit6', keyLabel: '6', note: 'G#', isBlack: true, offset: 8, row: 'lower' },
+  { code: 'Digit7', keyLabel: '7', note: 'A#', isBlack: true, offset: 10, row: 'lower' },
+];
+
+// Higher Octave (C di atasnya): Bottom Row Shifted VBNM,./ (offsets 12..23)
+const UPPER_KEYS: KeyCapDef[] = [
+  { code: 'KeyV', keyLabel: 'V', note: 'C', isBlack: false, offset: 12, row: 'upper' },
+  { code: 'KeyB', keyLabel: 'B', note: 'D', isBlack: false, offset: 14, row: 'upper' },
+  { code: 'KeyN', keyLabel: 'N', note: 'E', isBlack: false, offset: 16, row: 'upper' },
+  { code: 'KeyM', keyLabel: 'M', note: 'F', isBlack: false, offset: 17, row: 'upper' },
+  { code: 'Comma', keyLabel: ',', note: 'G', isBlack: false, offset: 19, row: 'upper' },
+  { code: 'Period', keyLabel: '.', note: 'A', isBlack: false, offset: 21, row: 'upper' },
+  { code: 'Slash', keyLabel: '/', note: 'B', isBlack: false, offset: 23, row: 'upper' },
+];
+
+const UPPER_BLACK_KEYS: (KeyCapDef | null)[] = [
+  { code: 'KeyG', keyLabel: 'G', note: 'C#', isBlack: true, offset: 13, row: 'upper' },
+  { code: 'KeyH', keyLabel: 'H', note: 'D#', isBlack: true, offset: 15, row: 'upper' },
+  null, // gap between D# and F#
+  { code: 'KeyK', keyLabel: 'K', note: 'F#', isBlack: true, offset: 18, row: 'upper' },
+  { code: 'KeyL', keyLabel: 'L', note: 'G#', isBlack: true, offset: 20, row: 'upper' },
+  { code: 'Semicolon', keyLabel: ';', note: 'A#', isBlack: true, offset: 22, row: 'upper' },
 ];
 
 export const KeyboardGuide: React.FC = () => {
@@ -187,14 +187,14 @@ export const KeyboardGuide: React.FC = () => {
       {/* Expandable Key Visualizer */}
       {!isCollapsed && (
         <div className="mt-2.5 flex flex-col md:flex-row gap-4 items-center justify-between">
-          {/* Lower Octave Section (Z - M) */}
+          {/* Lower Octave Section (Q - U) */}
           <div className="flex-1 bg-slate-900/60 p-2 rounded-lg border border-cyan-950/80">
             <div className="flex items-center justify-between mb-1.5 px-0.5">
               <span className="text-[10px] font-mono font-bold text-cyan-300 uppercase tracking-wider flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
                 Oktaf Bawah (C{keyboardBaseOctave})
               </span>
-              <span className="text-[9px] font-mono text-slate-500">Baris Bawah (ZXCV)</span>
+              <span className="text-[9px] font-mono text-slate-500">Baris Atas (QWERTY)</span>
             </div>
 
             {/* Black keys row */}
@@ -251,14 +251,14 @@ export const KeyboardGuide: React.FC = () => {
             </div>
           </div>
 
-          {/* Upper Octave Section (Q - U) */}
+          {/* Upper Octave Section (V - /) */}
           <div className="flex-1 bg-slate-900/60 p-2 rounded-lg border border-purple-950/80">
             <div className="flex items-center justify-between mb-1.5 px-0.5">
               <span className="text-[10px] font-mono font-bold text-purple-300 uppercase tracking-wider flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
                 Oktaf Atas (C{keyboardBaseOctave + 1})
               </span>
-              <span className="text-[9px] font-mono text-slate-500">Baris Atas (QWERTY)</span>
+              <span className="text-[9px] font-mono text-slate-500">Baris Bawah (VBNM,./)</span>
             </div>
 
             {/* Black keys row */}
