@@ -34,24 +34,26 @@ const LOWER_BLACK_KEYS: (KeyCapDef | null)[] = [
   { code: 'Digit7', keyLabel: '7', note: 'A#', isBlack: true, offset: 10, row: 'lower' },
 ];
 
-// Higher Octave (C di atasnya): Bottom Row Shifted VBNM,./ (offsets 12..23)
+// Higher Octave (C di atasnya): Bottom Row C.. / (offsets 12..24)
 const UPPER_KEYS: KeyCapDef[] = [
-  { code: 'KeyV', keyLabel: 'V', note: 'C', isBlack: false, offset: 12, row: 'upper' },
-  { code: 'KeyB', keyLabel: 'B', note: 'D', isBlack: false, offset: 14, row: 'upper' },
-  { code: 'KeyN', keyLabel: 'N', note: 'E', isBlack: false, offset: 16, row: 'upper' },
-  { code: 'KeyM', keyLabel: 'M', note: 'F', isBlack: false, offset: 17, row: 'upper' },
-  { code: 'Comma', keyLabel: ',', note: 'G', isBlack: false, offset: 19, row: 'upper' },
-  { code: 'Period', keyLabel: '.', note: 'A', isBlack: false, offset: 21, row: 'upper' },
-  { code: 'Slash', keyLabel: '/', note: 'B', isBlack: false, offset: 23, row: 'upper' },
+  { code: 'KeyC', keyLabel: 'C', note: 'C', isBlack: false, offset: 12, row: 'upper' },
+  { code: 'KeyV', keyLabel: 'V', note: 'D', isBlack: false, offset: 14, row: 'upper' },
+  { code: 'KeyB', keyLabel: 'B', note: 'E', isBlack: false, offset: 16, row: 'upper' },
+  { code: 'KeyN', keyLabel: 'N', note: 'F', isBlack: false, offset: 17, row: 'upper' },
+  { code: 'KeyM', keyLabel: 'M', note: 'G', isBlack: false, offset: 19, row: 'upper' },
+  { code: 'Comma', keyLabel: ',', note: 'A', isBlack: false, offset: 21, row: 'upper' },
+  { code: 'Period', keyLabel: '.', note: 'B', isBlack: false, offset: 23, row: 'upper' },
+  { code: 'Slash', keyLabel: '/', note: 'C', isBlack: false, offset: 24, row: 'upper' },
 ];
 
 const UPPER_BLACK_KEYS: (KeyCapDef | null)[] = [
-  { code: 'KeyG', keyLabel: 'G', note: 'C#', isBlack: true, offset: 13, row: 'upper' },
-  { code: 'KeyH', keyLabel: 'H', note: 'D#', isBlack: true, offset: 15, row: 'upper' },
-  null, // gap between D# and F#
-  { code: 'KeyK', keyLabel: 'K', note: 'F#', isBlack: true, offset: 18, row: 'upper' },
-  { code: 'KeyL', keyLabel: 'L', note: 'G#', isBlack: true, offset: 20, row: 'upper' },
-  { code: 'Semicolon', keyLabel: ';', note: 'A#', isBlack: true, offset: 22, row: 'upper' },
+  { code: 'KeyF', keyLabel: 'F', note: 'C#', isBlack: true, offset: 13, row: 'upper' },
+  { code: 'KeyG', keyLabel: 'G', note: 'D#', isBlack: true, offset: 15, row: 'upper' },
+  null, // gap between E and F (B and N)
+  { code: 'KeyJ', keyLabel: 'J', note: 'F#', isBlack: true, offset: 18, row: 'upper' },
+  { code: 'KeyK', keyLabel: 'K', note: 'G#', isBlack: true, offset: 20, row: 'upper' },
+  { code: 'KeyL', keyLabel: 'L', note: 'A#', isBlack: true, offset: 22, row: 'upper' },
+  null, // gap between B and closing C (. and /)
 ];
 
 export const KeyboardGuide: React.FC = () => {
@@ -251,14 +253,14 @@ export const KeyboardGuide: React.FC = () => {
             </div>
           </div>
 
-          {/* Upper Octave Section (V - /) */}
+          {/* Upper Octave Section (C - /) */}
           <div className="flex-1 bg-slate-900/60 p-2 rounded-lg border border-purple-950/80">
             <div className="flex items-center justify-between mb-1.5 px-0.5">
               <span className="text-[10px] font-mono font-bold text-purple-300 uppercase tracking-wider flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
                 Oktaf Atas (C{keyboardBaseOctave + 1})
               </span>
-              <span className="text-[9px] font-mono text-slate-500">Baris Bawah (VBNM,./)</span>
+              <span className="text-[9px] font-mono text-slate-500">Baris Bawah (C.. /)</span>
             </div>
 
             {/* Black keys row */}
@@ -294,6 +296,7 @@ export const KeyboardGuide: React.FC = () => {
               {UPPER_KEYS.map((k) => {
                 const midi = baseMidi + k.offset;
                 const isPressed = activeMidis.has(midi);
+                const noteOctave = keyboardBaseOctave + (k.offset >= 24 ? 2 : 1);
                 return (
                   <button
                     key={k.code}
@@ -308,7 +311,7 @@ export const KeyboardGuide: React.FC = () => {
                     }`}
                   >
                     <span className="text-[12px] font-bold leading-none">{k.keyLabel}</span>
-                    <span className="text-[8px] text-purple-300 font-semibold leading-none mt-0.5">{k.note}{keyboardBaseOctave + 1}</span>
+                    <span className="text-[8px] text-purple-300 font-semibold leading-none mt-0.5">{k.note}{noteOctave}</span>
                   </button>
                 );
               })}

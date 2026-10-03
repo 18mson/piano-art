@@ -1,5 +1,6 @@
 import { isBlackKey, midiToNoteName, midiToFrequency, MIN_MIDI, MAX_MIDI } from '../src/lib/music';
 import { computePianoLayout, getKeyAtPoint, clampStartOctave, getMidiKeyBoundsInLayout } from '../src/lib/layout';
+import { getKeyboardKeyForMidi, KEY_MAP } from '../src/lib/input/keyboard';
 
 function assert(condition: boolean, message: string) {
   if (!condition) {
@@ -170,9 +171,7 @@ const rectW = 390;
 const scaleX = rectW > 0 ? clientW / rectW : 1;
 assert(scaleX === 1, 'Coordinate scaleX correctly resolves to 1.0, NOT devicePixelRatio');
 
-console.log('\n--- Testing Swapped Keyboard Layout (QWERTY lower, VBNM,./ upper) ---');
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { getKeyboardKeyForMidi, KEY_MAP } = require('../src/lib/input/keyboard');
+console.log('\n--- Testing Keyboard Layout (QWERTY lower, C.. / upper) ---');
 
 // Base octave C3 = MIDI 48
 const c3Binding = getKeyboardKeyForMidi(48, 3);
@@ -184,24 +183,29 @@ assert(cs3Binding?.keyLabel === '2', 'Lower C# (C#3) is mapped to 2');
 const b3Binding = getKeyboardKeyForMidi(59, 3);
 assert(b3Binding?.keyLabel === 'U', 'Lower B (B3) is mapped to U');
 
-// Upper octave C4 = MIDI 60
+// Upper octave C4 = MIDI 60 (offset 12)
 const c4Binding = getKeyboardKeyForMidi(60, 3);
-assert(c4Binding?.keyLabel === 'V', 'Upper C (C4) is mapped to V');
+assert(c4Binding?.keyLabel === 'C', 'Upper C (C4) is mapped to C');
 
 const cs4Binding = getKeyboardKeyForMidi(61, 3);
-assert(cs4Binding?.keyLabel === 'G', 'Upper C# (C#4) is mapped to G');
+assert(cs4Binding?.keyLabel === 'F', 'Upper C# (C#4) is mapped to F');
 
 const g4Binding = getKeyboardKeyForMidi(67, 3);
-assert(g4Binding?.keyLabel === ',', 'Upper G (G4) is mapped to comma (,)');
+assert(g4Binding?.keyLabel === 'M', 'Upper G (G4) is mapped to M');
 
 const as4Binding = getKeyboardKeyForMidi(70, 3);
-assert(as4Binding?.keyLabel === ';', 'Upper A# (A#4) is mapped to semicolon (;)');
+assert(as4Binding?.keyLabel === 'L', 'Upper A# (A#4) is mapped to L');
 
 const b4Binding = getKeyboardKeyForMidi(71, 3);
-assert(b4Binding?.keyLabel === '/', 'Upper B (B4) is mapped to slash (/)');
+assert(b4Binding?.keyLabel === '.', 'Upper B (B4) is mapped to period (.)');
+
+// Closing C (C5) = MIDI 72 (offset 24)
+const c5Binding = getKeyboardKeyForMidi(72, 3);
+assert(c5Binding?.keyLabel === '/', 'Closing C (C5) is mapped to slash (/)');
 
 assert(KEY_MAP['KeyQ'] === 0, 'KEY_MAP: KeyQ is offset 0');
-assert(KEY_MAP['KeyV'] === 12, 'KEY_MAP: KeyV is offset 12');
-assert(KEY_MAP['Slash'] === 23, 'KEY_MAP: Slash is offset 23');
+assert(KEY_MAP['KeyC'] === 12, 'KEY_MAP: KeyC is offset 12');
+assert(KEY_MAP['Period'] === 23, 'KEY_MAP: Period is offset 23');
+assert(KEY_MAP['Slash'] === 24, 'KEY_MAP: Slash is offset 24');
 
 console.log('\nALL TESTS PASSED SUCCESSFULLY! 🎉');

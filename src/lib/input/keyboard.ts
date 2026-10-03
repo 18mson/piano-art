@@ -18,29 +18,30 @@ export const KEY_MAP: Record<string, number> = {
   Digit7: 10,// A#
   KeyU: 11,  // B
 
-  // Higher octave (Bottom row: VBNM,./ and black keys G H K L ;) - C{baseOctave + 1}
-  KeyV: 12,      // C
-  KeyG: 13,      // C#
-  KeyB: 14,      // D
-  KeyH: 15,      // D#
-  KeyN: 16,      // E
-  KeyM: 17,      // F
-  KeyK: 18,      // F#
-  Comma: 19,     // G
-  KeyL: 20,      // G#
-  Period: 21,    // A
-  Semicolon: 22, // A#
-  Slash: 23,     // B
+  // Higher octave (Bottom row: C.. / and black keys F, G, J, K, L) - C{baseOctave + 1}
+  KeyC: 12,   // C
+  KeyF: 13,   // C#
+  KeyV: 14,   // D
+  KeyG: 15,   // D#
+  KeyB: 16,   // E
+  KeyN: 17,   // F
+  KeyJ: 18,   // F#
+  KeyM: 19,   // G
+  KeyK: 20,   // G#
+  Comma: 21,  // A
+  KeyL: 22,   // A#
+  Period: 23, // B
+  Slash: 24,  // Closing C (C{baseOctave + 2})
 };
 
 export interface KeyBindingInfo {
-  offset: number; // 0..23
+  offset: number; // 0..24
   code: string;
   keyLabel: string;
   noteNameWithoutOctave: string;
   row: 'lower' | 'upper';
   isBlack: boolean;
-  octaveOffset: number; // 0 for base octave, 1 for base octave + 1
+  octaveOffset: number; // 0 for base octave, 1 for base octave + 1, 2 for closing C
 }
 
 export const OFFSET_TO_KEY_BINDING: Record<number, KeyBindingInfo> = {
@@ -58,36 +59,37 @@ export const OFFSET_TO_KEY_BINDING: Record<number, KeyBindingInfo> = {
   10: { offset: 10, code: 'Digit7', keyLabel: '7', noteNameWithoutOctave: 'A#', row: 'lower', isBlack: true, octaveOffset: 0 },
   11: { offset: 11, code: 'KeyU', keyLabel: 'U', noteNameWithoutOctave: 'B', row: 'lower', isBlack: false, octaveOffset: 0 },
 
-  // Higher octave (VBNM,./ - base octave + 1)
-  12: { offset: 12, code: 'KeyV', keyLabel: 'V', noteNameWithoutOctave: 'C', row: 'upper', isBlack: false, octaveOffset: 1 },
-  13: { offset: 13, code: 'KeyG', keyLabel: 'G', noteNameWithoutOctave: 'C#', row: 'upper', isBlack: true, octaveOffset: 1 },
-  14: { offset: 14, code: 'KeyB', keyLabel: 'B', noteNameWithoutOctave: 'D', row: 'upper', isBlack: false, octaveOffset: 1 },
-  15: { offset: 15, code: 'KeyH', keyLabel: 'H', noteNameWithoutOctave: 'D#', row: 'upper', isBlack: true, octaveOffset: 1 },
-  16: { offset: 16, code: 'KeyN', keyLabel: 'N', noteNameWithoutOctave: 'E', row: 'upper', isBlack: false, octaveOffset: 1 },
-  17: { offset: 17, code: 'KeyM', keyLabel: 'M', noteNameWithoutOctave: 'F', row: 'upper', isBlack: false, octaveOffset: 1 },
-  18: { offset: 18, code: 'KeyK', keyLabel: 'K', noteNameWithoutOctave: 'F#', row: 'upper', isBlack: true, octaveOffset: 1 },
-  19: { offset: 19, code: 'Comma', keyLabel: ',', noteNameWithoutOctave: 'G', row: 'upper', isBlack: false, octaveOffset: 1 },
-  20: { offset: 20, code: 'KeyL', keyLabel: 'L', noteNameWithoutOctave: 'G#', row: 'upper', isBlack: true, octaveOffset: 1 },
-  21: { offset: 21, code: 'Period', keyLabel: '.', noteNameWithoutOctave: 'A', row: 'upper', isBlack: false, octaveOffset: 1 },
-  22: { offset: 22, code: 'Semicolon', keyLabel: ';', noteNameWithoutOctave: 'A#', row: 'upper', isBlack: true, octaveOffset: 1 },
-  23: { offset: 23, code: 'Slash', keyLabel: '/', noteNameWithoutOctave: 'B', row: 'upper', isBlack: false, octaveOffset: 1 },
+  // Higher octave (C.. / and black keys F, G, J, K, L) - base octave + 1 and closing C
+  12: { offset: 12, code: 'KeyC', keyLabel: 'C', noteNameWithoutOctave: 'C', row: 'upper', isBlack: false, octaveOffset: 1 },
+  13: { offset: 13, code: 'KeyF', keyLabel: 'F', noteNameWithoutOctave: 'C#', row: 'upper', isBlack: true, octaveOffset: 1 },
+  14: { offset: 14, code: 'KeyV', keyLabel: 'V', noteNameWithoutOctave: 'D', row: 'upper', isBlack: false, octaveOffset: 1 },
+  15: { offset: 15, code: 'KeyG', keyLabel: 'G', noteNameWithoutOctave: 'D#', row: 'upper', isBlack: true, octaveOffset: 1 },
+  16: { offset: 16, code: 'KeyB', keyLabel: 'B', noteNameWithoutOctave: 'E', row: 'upper', isBlack: false, octaveOffset: 1 },
+  17: { offset: 17, code: 'KeyN', keyLabel: 'N', noteNameWithoutOctave: 'F', row: 'upper', isBlack: false, octaveOffset: 1 },
+  18: { offset: 18, code: 'KeyJ', keyLabel: 'J', noteNameWithoutOctave: 'F#', row: 'upper', isBlack: true, octaveOffset: 1 },
+  19: { offset: 19, code: 'KeyM', keyLabel: 'M', noteNameWithoutOctave: 'G', row: 'upper', isBlack: false, octaveOffset: 1 },
+  20: { offset: 20, code: 'KeyK', keyLabel: 'K', noteNameWithoutOctave: 'G#', row: 'upper', isBlack: true, octaveOffset: 1 },
+  21: { offset: 21, code: 'Comma', keyLabel: ',', noteNameWithoutOctave: 'A', row: 'upper', isBlack: false, octaveOffset: 1 },
+  22: { offset: 22, code: 'KeyL', keyLabel: 'L', noteNameWithoutOctave: 'A#', row: 'upper', isBlack: true, octaveOffset: 1 },
+  23: { offset: 23, code: 'Period', keyLabel: '.', noteNameWithoutOctave: 'B', row: 'upper', isBlack: false, octaveOffset: 1 },
+  24: { offset: 24, code: 'Slash', keyLabel: '/', noteNameWithoutOctave: 'C', row: 'upper', isBlack: false, octaveOffset: 2 },
 };
 
 /**
  * Returns PC keyboard key binding information for a given MIDI note number and base octave.
- * Returns null if the note is outside the 2-octave keyboard mapping.
+ * Returns null if the note is outside the 2-octave + closing C keyboard mapping.
  */
 export function getKeyboardKeyForMidi(midi: number, baseOctave: number): KeyBindingInfo | null {
   const baseMidi = (baseOctave + 1) * 12; // C of base octave
   const offset = midi - baseMidi;
-  if (offset >= 0 && offset <= 23) {
+  if (offset >= 0 && offset <= 24) {
     return OFFSET_TO_KEY_BINDING[offset] || null;
   }
   return null;
 }
 
 /**
- * Returns all 24 key bindings with calculated MIDI numbers for the given base octave.
+ * Returns all 25 key bindings with calculated MIDI numbers for the given base octave.
  */
 export function getAllKeyboardBindings(baseOctave: number): (KeyBindingInfo & { midi: number; noteName: string })[] {
   const baseMidi = (baseOctave + 1) * 12;

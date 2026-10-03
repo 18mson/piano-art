@@ -85,7 +85,7 @@ export default function Home() {
           <div className="absolute top-2 left-3 pointer-events-none bg-slate-950/70 backdrop-blur-sm border border-slate-800/80 px-2.5 py-1 rounded text-[11px] font-mono text-slate-400 flex items-center gap-2 z-10">
             <Keyboard size={13} className="text-cyan-400" />
             <span>
-              Tombol PC: <strong className="text-cyan-300 font-normal">Q–U</strong> (C{keyboardBaseOctave}) &amp; <strong className="text-purple-300 font-normal">V–/</strong> (C{keyboardBaseOctave + 1}) • Geser Oktaf: <strong className="text-amber-300 font-normal">◄ ►</strong>
+              Tombol PC: <strong className="text-cyan-300 font-normal">Q–U</strong> (C{keyboardBaseOctave}) &amp; <strong className="text-purple-300 font-normal">V–&apos;</strong> (C{keyboardBaseOctave + 1}) • Geser Oktaf: <strong className="text-amber-300 font-normal">◄ ►</strong>
             </span>
           </div>
         )}
