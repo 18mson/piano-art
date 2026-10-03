@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "tsc scripts/test-layout-and-music.ts --outDir ./dist --module commonjs --target es2020 --moduleResolution node && node ./dist/scripts/test-layout-and-music.js && rm -rf dist"
+    "test": "tsc scripts/test-layout-and-music.ts scripts/test-songs-and-falling-notes.ts --outDir ./dist --module commonjs --target es2020 --moduleResolution node && node ./dist/scripts/test-layout-and-music.js && node ./dist/scripts/test-songs-and-falling-notes.js && rm -rf dist"
   },
   "dependencies": {
     "lucide-react": "^1.16.0",

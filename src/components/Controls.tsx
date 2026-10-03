@@ -2,8 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import { usePianoStore } from '../store/pianoStore';
+import { useSongStore } from '../store/songStore';
 import { webMidiHandler, MidiDeviceState } from '../lib/input/midi';
-import { Volume2, Music, Sparkles, Sliders, Radio, AlertCircle, Keyboard, Maximize, Minimize } from 'lucide-react';
+import { Volume2, Music, Sparkles, Sliders, Radio, AlertCircle, Keyboard, Maximize, Minimize, Disc3 } from 'lucide-react';
 
 export const Controls: React.FC = () => {
   const {
@@ -21,6 +22,8 @@ export const Controls: React.FC = () => {
     isMobile,
     setIsMobile,
   } = usePianoStore();
+
+  const { openSelector, activeSong } = useSongStore();
 
   const [windowWidth, setWindowWidth] = useState(1024);
   const [isPortrait, setIsPortrait] = useState(false);
@@ -151,8 +154,23 @@ export const Controls: React.FC = () => {
         )}
       </div>
 
-      {/* Right: Sustain, Labels, MIDI status */}
+      {/* Right: Songs, Sustain, Labels, MIDI status */}
       <div className="flex items-center gap-2 flex-wrap">
+        {/* Falling Notes Song Selection Button */}
+        <button
+          type="button"
+          onClick={openSelector}
+          title="Pilih Lagu & Panduan Not Jatuh (Falling Notes)"
+          className={`flex items-center gap-1.5 px-3 py-1 text-xs font-mono font-medium rounded border transition-all ${
+            activeSong
+              ? 'bg-gradient-to-r from-purple-500/25 to-cyan-500/25 text-cyan-300 border-cyan-400/60 shadow-[0_0_12px_rgba(6,182,212,0.4)]'
+              : 'bg-slate-900/80 text-slate-300 border-slate-700 hover:text-white hover:border-slate-600 hover:bg-slate-800'
+          }`}
+        >
+          <Disc3 size={13} className={`text-cyan-400 ${activeSong ? 'animate-spin' : ''}`} style={{ animationDuration: '3s' }} />
+          <span>{activeSong ? (activeSong.title.length > 12 ? `${activeSong.title.slice(0, 10)}…` : activeSong.title) : 'Lagu'}</span>
+        </button>
+
         {/* Sustain Pedal Toggle */}
         <button
           type="button"

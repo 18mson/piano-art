@@ -10,6 +10,8 @@ import { PointerInputHandler } from '../lib/input/pointer';
 import { KeyboardInputHandler, getKeyboardKeyForMidi } from '../lib/input/keyboard';
 import { ParticleSystem } from '../lib/graphics/particles';
 import { generateStars, renderBackground, renderWhiteKey, renderBlackKey, Star } from '../lib/graphics/assets';
+import { useSongStore } from '../store/songStore';
+import { renderFallingNotes } from '../lib/graphics/fallingNotes';
 
 export const PianoCanvas: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -44,6 +46,31 @@ export const PianoCanvas: React.FC = () => {
     };
   }, [octaves, startOctave, showNoteNames, showKeyboardShortcuts, keyboardBaseOctave]);
 
+  // Keep latest songStore state in ref for 60fps render loop
+  const songStoreRef = useRef(useSongStore.getState());
+  useEffect(() => {
+    const unsub = useSongStore.subscribe((state) => {
+      songStoreRef.current = state;
+    });
+    return unsub;
+  }, []);
+
+  // When a new song is selected, auto-center/adjust starting octave if needed
+  useEffect(() => {
+    const unsub = useSongStore.subscribe((curr, prev) => {
+      if (curr.activeSong && curr.activeSong.id !== prev.activeSong?.id) {
+        const { startOctave, setStartOctave } = usePianoStore.getState();
+        if (
+          curr.activeSong.suggestedStartOctave &&
+          curr.activeSong.suggestedStartOctave !== startOctave
+        ) {
+          setStartOctave(curr.activeSong.suggestedStartOctave);
+        }
+      }
+    });
+    return unsub;
+  }, []);
+
   useEffect(() => {
     if (!containerRef.current) return;
     const container = containerRef.current;
@@ -59,11 +86,17 @@ export const PianoCanvas: React.FC = () => {
 
     // Pixi display objects
     let bgGraphics: Graphics;
+    let fallingWhiteGraphics: Graphics;
+    let fallingBlackGraphics: Graphics;
+    let hitGlowGraphics: Graphics;
     let whiteKeysGraphics: Graphics;
     let blackKeysGraphics: Graphics;
     let badgesGraphics: Graphics;
     let labelsContainer: Container;
     let particleSystem: ParticleSystem;
+
+    // Track active auto-play sounding note indices
+    const activePlayingIndices = new Set<number>();
 
     // Animation / Tweening state (continuous viewport camera pan)
     let stars: Star[] = [];
@@ -435,6 +468,9 @@ export const PianoCanvas: React.FC = () => {
 
       // Layers setup
       bgGraphics = new Graphics();
+      fallingWhiteGraphics = new Graphics();
+      fallingBlackGraphics = new Graphics();
+      hitGlowGraphics = new Graphics();
       whiteKeysGraphics = new Graphics();
       blackKeysGraphics = new Graphics();
       badgesGraphics = new Graphics();
@@ -442,6 +478,9 @@ export const PianoCanvas: React.FC = () => {
       particleSystem = new ParticleSystem();
 
       pixiApp.stage.addChild(bgGraphics);
+      pixiApp.stage.addChild(fallingWhiteGraphics);
+      pixiApp.stage.addChild(fallingBlackGraphics);
+      pixiApp.stage.addChild(hitGlowGraphics);
       pixiApp.stage.addChild(whiteKeysGraphics);
       pixiApp.stage.addChild(blackKeysGraphics);
       pixiApp.stage.addChild(badgesGraphics);
@@ -510,6 +549,66 @@ export const PianoCanvas: React.FC = () => {
 
         // Update particles
         particleSystem.update(ticker.deltaTime);
+
+        // Song falling notes update & auto-play
+        const songState = songStoreRef.current;
+        if (songState.activeSong && songState.isPlaying) {
+          const deltaSec = (ticker.deltaTime / 60) * songState.playbackSpeed;
+          const nextTime = songState.currentTime + deltaSec;
+
+          if (nextTime >= songState.activeSong.duration) {
+            useSongStore.getState().stop();
+          } else {
+            useSongStore.setState({ currentTime: nextTime });
+
+            // In 'listen' (Auto-play) mode, trigger noteOn and noteOff
+            if (songState.mode === 'listen') {
+              const notes = songState.activeSong.notes;
+              for (let i = 0; i < notes.length; i++) {
+                const n = notes[i];
+                const isSounding = nextTime >= n.time && nextTime < n.time + n.duration;
+                const wasSounding = activePlayingIndices.has(i);
+
+                if (isSounding && !wasSounding) {
+                  activePlayingIndices.add(i);
+                  inputDispatcher.noteOn(n.midi, n.velocity ?? 0.85);
+                } else if (!isSounding && wasSounding) {
+                  activePlayingIndices.delete(i);
+                  inputDispatcher.noteOff(n.midi);
+                }
+              }
+            }
+          }
+        } else if (!songState.isPlaying && activePlayingIndices.size > 0) {
+          if (songState.activeSong) {
+            activePlayingIndices.forEach((idx) => {
+              const n = songState.activeSong?.notes[idx];
+              if (n) inputDispatcher.noteOff(n.midi);
+            });
+          }
+          activePlayingIndices.clear();
+        }
+
+        // Render falling notes if song is active
+        if (activeLayoutRef.current) {
+          if (songState.activeSong) {
+            renderFallingNotes({
+              whiteNotesGraphics: fallingWhiteGraphics,
+              blackNotesGraphics: fallingBlackGraphics,
+              hitGlowGraphics: hitGlowGraphics,
+              song: songState.activeSong,
+              currentTime: songState.currentTime,
+              fallDuration: songState.fallDuration,
+              layout: activeLayoutRef.current,
+              pianoY: activeLayoutRef.current.pianoY,
+              screenWidth: pixiApp.screen.width,
+            });
+          } else {
+            fallingWhiteGraphics.clear();
+            fallingBlackGraphics.clear();
+            hitGlowGraphics.clear();
+          }
+        }
       });
 
       // Window resize / orientation change

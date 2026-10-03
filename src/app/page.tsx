@@ -5,6 +5,8 @@ import dynamic from 'next/dynamic';
 import { MiniMap } from '../components/MiniMap';
 import { Controls } from '../components/Controls';
 import { KeyboardGuide } from '../components/KeyboardGuide';
+import { SongSelectorModal } from '../components/SongSelectorModal';
+import { SongPlayerBar } from '../components/SongPlayerBar';
 import { usePianoStore } from '../store/pianoStore';
 import { audioEngine } from '../lib/audio';
 import { Play, Sparkles, Keyboard, RotateCcw } from 'lucide-react';
@@ -77,6 +79,9 @@ export default function Home() {
       <div className="relative flex-1 w-full h-full overflow-hidden flex flex-col">
         <DynamicPianoCanvas />
 
+        {/* Floating Song Player Toolbar (Active when a song is playing/selected) */}
+        <SongPlayerBar />
+
         {/* Desktop Interactive Keyboard Guide */}
         <KeyboardGuide />
 
@@ -85,11 +90,14 @@ export default function Home() {
           <div className="absolute top-2 left-3 pointer-events-none bg-slate-950/70 backdrop-blur-sm border border-slate-800/80 px-2.5 py-1 rounded text-[11px] font-mono text-slate-400 flex items-center gap-2 z-10">
             <Keyboard size={13} className="text-cyan-400" />
             <span>
-              Tombol PC: <strong className="text-cyan-300 font-normal">Q–U</strong> (C{keyboardBaseOctave}) &amp; <strong className="text-purple-300 font-normal">V–&apos;</strong> (C{keyboardBaseOctave + 1}) • Geser Oktaf: <strong className="text-amber-300 font-normal">◄ ►</strong>
+              Tombol PC: <strong className="text-cyan-300 font-normal">Q–U</strong> (C{keyboardBaseOctave}) &amp; <strong className="text-purple-300 font-normal">C–/</strong> (C{keyboardBaseOctave + 1}) • Geser Oktaf: <strong className="text-amber-300 font-normal">◄ ►</strong>
             </span>
           </div>
         )}
       </div>
+
+      {/* Song Selector Modal Dialog */}
+      <SongSelectorModal />
 
       {/* Initial User Gesture Audio Overlay */}
       {!isAudioStarted && (
