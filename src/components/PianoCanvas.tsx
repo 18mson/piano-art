@@ -168,7 +168,9 @@ export const PianoCanvas: React.FC = () => {
           const color = getPitchColor(key.midi).hex;
           renderWhiteKey(whiteKeysGraphics, key, isPressed, color);
 
-          const keyBinding = showShortcuts ? getKeyboardKeyForMidi(key.midi, baseOctave) : null;
+          const keyBinding = showShortcuts
+            ? getKeyboardKeyForMidi(key.midi, baseOctave, storeRef.current.octaves)
+            : null;
 
           if (keyBinding && key.width >= 16) {
             const isLower = keyBinding.row === 'lower';
@@ -244,7 +246,9 @@ export const PianoCanvas: React.FC = () => {
           const color = getPitchColor(key.midi).hex;
           renderBlackKey(blackKeysGraphics, key, isPressed, color);
 
-          const keyBinding = showShortcuts ? getKeyboardKeyForMidi(key.midi, baseOctave) : null;
+          const keyBinding = showShortcuts
+            ? getKeyboardKeyForMidi(key.midi, baseOctave, storeRef.current.octaves)
+            : null;
 
           if (keyBinding && key.width >= 12) {
             const isLower = keyBinding.row === 'lower';
@@ -318,6 +322,7 @@ export const PianoCanvas: React.FC = () => {
 
       if (keyboardHandler) {
         keyboardHandler.setBaseOctave(storeRef.current.keyboardBaseOctave);
+        keyboardHandler.setOctaves(storeRef.current.octaves);
       }
 
       const isMobilePortrait = height > width && width < 768;
@@ -500,6 +505,7 @@ export const PianoCanvas: React.FC = () => {
       // Bind Keyboard Input
       keyboardHandler = new KeyboardInputHandler();
       keyboardHandler.setBaseOctave(storeRef.current.keyboardBaseOctave);
+      keyboardHandler.setOctaves(storeRef.current.octaves);
       const unbindKeyboard = keyboardHandler.bind((newOctave) => {
         setKeyboardBaseOctave(newOctave);
       });
@@ -628,6 +634,7 @@ export const PianoCanvas: React.FC = () => {
       const handleRedrawOnly = () => {
         if (keyboardHandler) {
           keyboardHandler.setBaseOctave(storeRef.current.keyboardBaseOctave);
+          keyboardHandler.setOctaves(storeRef.current.octaves);
         }
         redrawKeys();
       };

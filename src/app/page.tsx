@@ -9,6 +9,7 @@ import { SongSelectorModal } from '../components/SongSelectorModal';
 import { SongPlayerBar } from '../components/SongPlayerBar';
 import { usePianoStore } from '../store/pianoStore';
 import { audioEngine } from '../lib/audio';
+import { isThreeOctavesMode } from '../lib/input/keyboard';
 import { Play, Sparkles, Keyboard, RotateCcw } from 'lucide-react';
 
 const DynamicPianoCanvas = dynamic(
@@ -25,6 +26,7 @@ const DynamicPianoCanvas = dynamic(
 
 export default function Home() {
   const {
+    octaves,
     isAudioStarted,
     setAudioStarted,
     audioReady,
@@ -89,9 +91,15 @@ export default function Home() {
         {!isMobile && (
           <div className="absolute top-2 left-3 pointer-events-none bg-slate-950/70 backdrop-blur-sm border border-slate-800/80 px-2.5 py-1 rounded text-[11px] font-mono text-slate-400 flex items-center gap-2 z-10">
             <Keyboard size={13} className="text-cyan-400" />
-            <span>
-              Tombol PC: <strong className="text-cyan-300 font-normal">Q–U</strong> (C{keyboardBaseOctave}) &amp; <strong className="text-purple-300 font-normal">C–/</strong> (C{keyboardBaseOctave + 1}) • Geser Oktaf: <strong className="text-amber-300 font-normal">◄ ►</strong>
-            </span>
+            {isThreeOctavesMode(octaves) ? (
+              <span>
+                Tombol PC (3 Oktaf): <strong className="text-cyan-300 font-normal">Z–/</strong> (C{keyboardBaseOctave}) &amp; <strong className="text-purple-300 font-normal">Q–]</strong> (F{keyboardBaseOctave + 1}..C{keyboardBaseOctave + 3}) • Geser Oktaf: <strong className="text-amber-300 font-normal">◄ ►</strong>
+              </span>
+            ) : (
+              <span>
+                Tombol PC (2 Oktaf): <strong className="text-cyan-300 font-normal">Q–U</strong> (C{keyboardBaseOctave}) &amp; <strong className="text-purple-300 font-normal">C–/</strong> (C{keyboardBaseOctave + 1}) • Geser Oktaf: <strong className="text-amber-300 font-normal">◄ ►</strong>
+              </span>
+            )}
           </div>
         )}
       </div>

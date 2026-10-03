@@ -171,41 +171,74 @@ const rectW = 390;
 const scaleX = rectW > 0 ? clientW / rectW : 1;
 assert(scaleX === 1, 'Coordinate scaleX correctly resolves to 1.0, NOT devicePixelRatio');
 
-console.log('\n--- Testing Keyboard Layout (QWERTY lower, C.. / upper) ---');
+console.log('\n--- Testing 2-Octave Keyboard Layout (octaves = 2) ---');
 
 // Base octave C3 = MIDI 48
-const c3Binding = getKeyboardKeyForMidi(48, 3);
-assert(c3Binding?.keyLabel === 'Q', 'Lower C (C3) is mapped to Q');
+const c3Binding = getKeyboardKeyForMidi(48, 3, 2);
+assert(c3Binding?.keyLabel === 'Q', '2-oct: Lower C (C3) is mapped to Q');
 
-const cs3Binding = getKeyboardKeyForMidi(49, 3);
-assert(cs3Binding?.keyLabel === '2', 'Lower C# (C#3) is mapped to 2');
+const cs3Binding = getKeyboardKeyForMidi(49, 3, 2);
+assert(cs3Binding?.keyLabel === '2', '2-oct: Lower C# (C#3) is mapped to 2');
 
-const b3Binding = getKeyboardKeyForMidi(59, 3);
-assert(b3Binding?.keyLabel === 'U', 'Lower B (B3) is mapped to U');
+const b3Binding = getKeyboardKeyForMidi(59, 3, 2);
+assert(b3Binding?.keyLabel === 'U', '2-oct: Lower B (B3) is mapped to U');
 
 // Upper octave C4 = MIDI 60 (offset 12)
-const c4Binding = getKeyboardKeyForMidi(60, 3);
-assert(c4Binding?.keyLabel === 'C', 'Upper C (C4) is mapped to C');
+const c4Binding = getKeyboardKeyForMidi(60, 3, 2);
+assert(c4Binding?.keyLabel === 'C', '2-oct: Upper C (C4) is mapped to C');
 
-const cs4Binding = getKeyboardKeyForMidi(61, 3);
-assert(cs4Binding?.keyLabel === 'F', 'Upper C# (C#4) is mapped to F');
+const cs4Binding = getKeyboardKeyForMidi(61, 3, 2);
+assert(cs4Binding?.keyLabel === 'F', '2-oct: Upper C# (C#4) is mapped to F');
 
-const g4Binding = getKeyboardKeyForMidi(67, 3);
-assert(g4Binding?.keyLabel === 'M', 'Upper G (G4) is mapped to M');
+const g4Binding = getKeyboardKeyForMidi(67, 3, 2);
+assert(g4Binding?.keyLabel === 'M', '2-oct: Upper G (G4) is mapped to M');
 
-const as4Binding = getKeyboardKeyForMidi(70, 3);
-assert(as4Binding?.keyLabel === 'L', 'Upper A# (A#4) is mapped to L');
+const as4Binding = getKeyboardKeyForMidi(70, 3, 2);
+assert(as4Binding?.keyLabel === 'L', '2-oct: Upper A# (A#4) is mapped to L');
 
-const b4Binding = getKeyboardKeyForMidi(71, 3);
-assert(b4Binding?.keyLabel === '.', 'Upper B (B4) is mapped to period (.)');
+const b4Binding = getKeyboardKeyForMidi(71, 3, 2);
+assert(b4Binding?.keyLabel === '.', '2-oct: Upper B (B4) is mapped to period (.)');
 
 // Closing C (C5) = MIDI 72 (offset 24)
-const c5Binding = getKeyboardKeyForMidi(72, 3);
-assert(c5Binding?.keyLabel === '/', 'Closing C (C5) is mapped to slash (/)');
+const c5Binding = getKeyboardKeyForMidi(72, 3, 2);
+assert(c5Binding?.keyLabel === '/', '2-oct: Closing C (C5) is mapped to slash (/)');
 
-assert(KEY_MAP['KeyQ'] === 0, 'KEY_MAP: KeyQ is offset 0');
-assert(KEY_MAP['KeyC'] === 12, 'KEY_MAP: KeyC is offset 12');
-assert(KEY_MAP['Period'] === 23, 'KEY_MAP: Period is offset 23');
-assert(KEY_MAP['Slash'] === 24, 'KEY_MAP: Slash is offset 24');
+console.log('\n--- Testing 3-Octave Chromatic Keyboard Layout (octaves >= 3: Z-/ & Q-]) ---');
+
+// Offset 0: C3 = MIDI 48 -> KeyZ ('Z')
+const c3_3oct = getKeyboardKeyForMidi(48, 3, 3);
+assert(c3_3oct?.keyLabel === 'Z', '3-oct: C3 is mapped to Z');
+
+// Offset 1: C#3 = MIDI 49 -> KeyS ('S')
+const cs3_3oct = getKeyboardKeyForMidi(49, 3, 3);
+assert(cs3_3oct?.keyLabel === 'S', '3-oct: C#3 is mapped to S');
+
+// Offset 11: B3 = MIDI 59 -> KeyM ('M')
+const b3_3oct = getKeyboardKeyForMidi(59, 3, 3);
+assert(b3_3oct?.keyLabel === 'M', '3-oct: B3 is mapped to M');
+
+// Offset 12: C4 = MIDI 60 -> Comma (',')
+const c4_3oct = getKeyboardKeyForMidi(60, 3, 3);
+assert(c4_3oct?.keyLabel === ',', '3-oct: C4 is mapped to comma (,)');
+
+// Offset 16: E4 = MIDI 64 -> Slash ('/')
+const e4_3oct = getKeyboardKeyForMidi(64, 3, 3);
+assert(e4_3oct?.keyLabel === '/', '3-oct: E4 is mapped to slash (/)');
+
+// Offset 17: F4 = MIDI 65 -> KeyQ ('Q')
+const f4_3oct = getKeyboardKeyForMidi(65, 3, 3);
+assert(f4_3oct?.keyLabel === 'Q', '3-oct: F4 is mapped to Q');
+
+// Offset 18: F#4 = MIDI 66 -> Digit2 ('2')
+const fs4_3oct = getKeyboardKeyForMidi(66, 3, 3);
+assert(fs4_3oct?.keyLabel === '2', '3-oct: F#4 is mapped to 2');
+
+// Offset 24: C5 = MIDI 72 -> KeyT ('T')
+const c5_3oct = getKeyboardKeyForMidi(72, 3, 3);
+assert(c5_3oct?.keyLabel === 'T', '3-oct: C5 is mapped to T');
+
+// Offset 36: Closing C6 = MIDI 84 -> BracketRight (']')
+const c6_3oct = getKeyboardKeyForMidi(84, 3, 3);
+assert(c6_3oct?.keyLabel === ']', '3-oct: Closing C6 is mapped to ]');
 
 console.log('\nALL TESTS PASSED SUCCESSFULLY! 🎉');
