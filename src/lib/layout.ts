@@ -32,17 +32,18 @@ export interface LayoutOptions {
   screenWidth: number;
   screenHeight: number;
   octaves: number | 'all';
-  startOctave: number; // 1 to 7
+  startOctave: number; // 0 to 7 (0 = A0, 1 = C1, 2 = C2...)
   pianoHeightRatio?: number; // portion of screen for piano keys (default 0.6)
 }
 
 /**
  * Clamp startOctave into valid bounds for a given octave count.
+ * 0 represents starting from lowest note A0.
  */
 export function clampStartOctave(startOctave: number, octaves: number | 'all'): number {
-  if (octaves === 'all') return 1;
-  const maxStart = Math.max(1, 8 - octaves);
-  return Math.max(1, Math.min(maxStart, startOctave));
+  if (octaves === 'all') return 0;
+  const maxStart = Math.max(0, 8 - octaves);
+  return Math.max(0, Math.min(maxStart, startOctave));
 }
 
 /**
@@ -64,6 +65,9 @@ export function computePianoLayout(options: LayoutOptions): PianoLayout {
   if (octaves === 'all') {
     startMidi = MIN_MIDI; // 21 (A0)
     endMidi = MAX_MIDI;   // 108 (C8)
+  } else if (validStartOctave === 0) {
+    startMidi = MIN_MIDI; // 21 (A0)
+    endMidi = MIN_MIDI + (octaves * 12); // A{octaves}
   } else {
     startMidi = (validStartOctave + 1) * 12; // C{startOctave}
     endMidi = startMidi + (octaves * 12);    // C{startOctave + octaves}

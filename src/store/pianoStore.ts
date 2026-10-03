@@ -96,7 +96,7 @@ export const usePianoStore = create<PianoStore>((set, get) => {
       const clampedStart = clampStartOctave(state.startOctave, octaves);
       const keyboardBaseOctave = octaves === 'all'
         ? (state.keyboardBaseOctave || 4)
-        : Math.max(1, Math.min(6, clampedStart));
+        : Math.max(1, Math.min(6, clampedStart || 1));
       const nextSettings = {
         ...state,
         octaves,
@@ -112,7 +112,7 @@ export const usePianoStore = create<PianoStore>((set, get) => {
       const clamped = clampStartOctave(startOctave, state.octaves);
       const keyboardBaseOctave = state.octaves === 'all'
         ? state.keyboardBaseOctave
-        : Math.max(1, Math.min(6, clamped));
+        : Math.max(1, Math.min(6, clamped || 1));
       set({ startOctave: clamped, keyboardBaseOctave });
       persistSettings({ ...state, startOctave: clamped, keyboardBaseOctave });
     },
@@ -122,7 +122,7 @@ export const usePianoStore = create<PianoStore>((set, get) => {
       if (state.octaves === 'all') return;
       const next = state.startOctave + delta;
       const clamped = clampStartOctave(next, state.octaves);
-      const keyboardBaseOctave = Math.max(1, Math.min(6, clamped));
+      const keyboardBaseOctave = Math.max(1, Math.min(6, clamped || 1));
       set({ startOctave: clamped, keyboardBaseOctave });
       persistSettings({ ...state, startOctave: clamped, keyboardBaseOctave });
     },

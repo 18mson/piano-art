@@ -1,16 +1,29 @@
 'use client';
 
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useCallback } from 'react';
 import { usePianoStore } from '../store/pianoStore';
-import { isBlackKey, NOTE_NAMES } from '../lib/music';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const TOTAL_WHITE_KEYS = 52;
 
-// White key index of C notes: C1 = 2, C2 = 9, C3 = 16, C4 = 23, C5 = 30, C6 = 37, C7 = 44, C8 = 51
+// White key index of C notes: A0 = 0, C1 = 2, C2 = 9, C3 = 16, C4 = 23, C5 = 30, C6 = 37, C7 = 44, C8 = 51
 function getWhiteKeyIndexForOctave(octave: number): number {
+  if (octave <= 0) return 0;
   return 2 + (octave - 1) * 7;
 }
+
+// Markers for all octaves across the 88-key piano
+const OCTAVE_MARKERS: { label: string; whiteIdx: number; isMiddleC?: boolean }[] = [
+  { label: 'A0', whiteIdx: 0 },
+  { label: 'C1', whiteIdx: 2 },
+  { label: 'C2', whiteIdx: 9 },
+  { label: 'C3', whiteIdx: 16 },
+  { label: 'C4', whiteIdx: 23, isMiddleC: true },
+  { label: 'C5', whiteIdx: 30 },
+  { label: 'C6', whiteIdx: 37 },
+  { label: 'C7', whiteIdx: 44 },
+  { label: 'C8', whiteIdx: 51 },
+];
 
 export const MiniMap: React.FC = () => {
   const {
@@ -28,8 +41,18 @@ export const MiniMap: React.FC = () => {
   const isAll88 = octaves === 'all';
   const numOctaves = typeof octaves === 'number' ? octaves : 7.2;
 
-  const targetStartWhiteIdx = isAll88 ? 0 : getWhiteKeyIndexForOctave(startOctave);
-  const targetEndWhiteIdx = isAll88 ? 51 : getWhiteKeyIndexForOctave(startOctave + numOctaves);
+  const targetStartWhiteIdx = isAll88
+    ? 0
+    : startOctave === 0
+    ? 0
+    : getWhiteKeyIndexForOctave(startOctave);
+
+  const targetEndWhiteIdx = isAll88
+    ? 51
+    : startOctave === 0
+    ? Math.min(51, Math.round(numOctaves * 7))
+    : Math.min(51, getWhiteKeyIndexForOctave(startOctave + numOctaves));
+
   const targetWhiteCount = targetEndWhiteIdx - targetStartWhiteIdx + 1;
 
   const windowWidthRatio = isAll88 ? 1 : targetWhiteCount / TOTAL_WHITE_KEYS;
@@ -57,8 +80,10 @@ export const MiniMap: React.FC = () => {
     let closestOctave = 1;
     let minDistance = Infinity;
 
-    for (let s = 1; s <= maxStart; s++) {
-      const ratio = getWhiteKeyIndexForOctave(s) / TOTAL_WHITE_KEYS;
+    // Check all octaves including s = 0 (A0)
+    for (let s = 0; s <= maxStart; s++) {
+      const whiteIdx = s === 0 ? 0 : getWhiteKeyIndexForOctave(s);
+      const ratio = whiteIdx / TOTAL_WHITE_KEYS;
       const dist = Math.abs(ratio - currentLeftRatio);
       if (dist < minDistance) {
         minDistance = dist;
@@ -80,11 +105,9 @@ export const MiniMap: React.FC = () => {
     const clickX = e.clientX - stripRect.left;
     const clickRatio = Math.max(0, Math.min(1, clickX / stripRect.width));
 
-    // If clicking directly on or outside the window, jump or start dragging
     const currentWindowStart = activeLeftRatio;
     const currentWindowEnd = activeLeftRatio + windowWidthRatio;
 
-    // Capture pointer
     try {
       e.currentTarget.setPointerCapture(e.pointerId);
     } catch {}
@@ -126,7 +149,7 @@ export const MiniMap: React.FC = () => {
   };
 
   // Keyboard navigation
-  const canShiftLeft = !isAll88 && startOctave > 1;
+  const canShiftLeft = !isAll88 && startOctave > 0;
   const canShiftRight = !isAll88 && typeof octaves === 'number' && startOctave < 8 - octaves;
 
   const handleShiftLeft = () => {
@@ -142,17 +165,6 @@ export const MiniMap: React.FC = () => {
       shiftStartOctave(1);
     }
   };
-
-  // Render static 88-key preview elements once
-  const miniKeys = React.useMemo(() => {
-    const keys: { midi: number; isBlack: boolean; whiteIdx: number }[] = [];
-    let wCount = 0;
-    for (let m = 21; m <= 108; m++) {
-      const black = isBlackKey(m);
-      keys.push({ midi: m, isBlack: black, whiteIdx: black ? wCount - 1 : wCount++ });
-    }
-    return keys;
-  }, []);
 
   return (
     <div className="w-full bg-slate-950/80 backdrop-blur-md border-b border-slate-800/80 select-none flex items-center px-2 py-1 gap-2 z-20 safe-p-left safe-p-right">
@@ -178,31 +190,59 @@ export const MiniMap: React.FC = () => {
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
-        className="relative flex-1 h-7 bg-slate-900/90 rounded border border-slate-700/60 overflow-hidden cursor-pointer touch-none"
+        className="relative flex-1 h-8 bg-slate-900/90 rounded border border-slate-700/60 overflow-hidden cursor-pointer touch-none"
       >
-        {/* Render 52 tiny white keys */}
+        {/* Render 52 tiny white keys with subtle octave dividers */}
         <div className="absolute inset-0 flex">
-          {Array.from({ length: TOTAL_WHITE_KEYS }).map((_, i) => (
-            <div
-              key={i}
-              className={`flex-1 h-full border-r border-slate-800/50 ${
-                i === 23 ? 'bg-amber-500/20' : 'bg-slate-300/10'
-              }`}
-            />
-          ))}
+          {Array.from({ length: TOTAL_WHITE_KEYS }).map((_, i) => {
+            const isCKey = i === 2 || i === 9 || i === 16 || i === 23 || i === 30 || i === 37 || i === 44 || i === 51;
+            const isMiddleC = i === 23;
+            return (
+              <div
+                key={i}
+                className={`flex-1 h-full border-r border-slate-800/40 ${
+                  isMiddleC
+                    ? 'bg-amber-500/15'
+                    : isCKey
+                    ? 'bg-cyan-500/10'
+                    : 'bg-slate-300/5'
+                }`}
+              />
+            );
+          })}
         </div>
 
-        {/* Middle C (C4) indicator dot/marker */}
-        <div
-          className="absolute top-0 bottom-0 flex flex-col items-center pointer-events-none"
-          style={{
-            left: `${(23.5 / TOTAL_WHITE_KEYS) * 100}%`,
-            transform: 'translateX(-50%)',
-          }}
-        >
-          <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.9)]" />
-          <span className="text-[7px] text-amber-300 font-mono font-bold leading-none mt-0.5">C4</span>
-        </div>
+        {/* Octave Markers for ALL octaves across 88 keys */}
+        {OCTAVE_MARKERS.map((marker) => {
+          const leftPercent = ((marker.whiteIdx + 0.5) / TOTAL_WHITE_KEYS) * 100;
+          return (
+            <div
+              key={marker.label}
+              className="absolute top-0 bottom-0 flex flex-col items-center pointer-events-none z-10"
+              style={{
+                left: `${leftPercent}%`,
+                transform: 'translateX(-50%)',
+              }}
+            >
+              <div
+                className={`rounded-full transition-all ${
+                  marker.isMiddleC
+                    ? 'w-1.5 h-1.5 bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.9)] mt-0.5'
+                    : 'w-1 h-1 bg-slate-500/80 mt-1'
+                }`}
+              />
+              <span
+                className={`text-[7px] font-mono leading-none mt-0.5 select-none ${
+                  marker.isMiddleC
+                    ? 'text-amber-300 font-bold drop-shadow'
+                    : 'text-slate-400 font-medium'
+                }`}
+              >
+                {marker.label}
+              </span>
+            </div>
+          );
+        })}
 
         {/* Draggable Active Viewport Window */}
         <div
@@ -216,8 +256,12 @@ export const MiniMap: React.FC = () => {
             width: `${windowWidthRatio * 100}%`,
           }}
         >
-          <div className="absolute top-0 left-1 text-[8px] font-mono font-semibold text-cyan-200 pointer-events-none drop-shadow">
-            {isAll88 ? '88 Keys' : `C${startOctave} - C${startOctave + (typeof octaves === 'number' ? octaves : 0)}`}
+          <div className="absolute bottom-0.5 left-1 text-[8px] font-mono font-bold text-cyan-200 pointer-events-none drop-shadow bg-cyan-950/80 px-1 rounded-t border-t border-r border-cyan-400/60 leading-tight">
+            {isAll88
+              ? '88 Tuts'
+              : startOctave === 0
+              ? `A0 - A${octaves}`
+              : `C${startOctave} - C${startOctave + (typeof octaves === 'number' ? octaves : 0)}`}
           </div>
         </div>
       </div>
@@ -239,3 +283,4 @@ export const MiniMap: React.FC = () => {
     </div>
   );
 };
+

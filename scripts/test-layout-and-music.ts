@@ -93,8 +93,22 @@ assert(hitAbove === null, 'Clicking outside piano returns null');
 console.log('\n--- Testing Octave Clamping ---');
 assert(clampStartOctave(5, 3) === 5, 'Start octave 5 is valid for 3 octaves (5..8)');
 assert(clampStartOctave(7, 3) === 5, 'Start octave 7 clamps to 5 for 3 octaves');
-assert(clampStartOctave(0, 3) === 1, 'Start octave 0 clamps to 1');
-assert(clampStartOctave(3, 'all') === 1, 'Start octave is 1 for all 88 keys');
+assert(clampStartOctave(0, 3) === 0, 'Start octave 0 (A0) is valid');
+assert(clampStartOctave(-1, 3) === 0, 'Negative start octave clamps to 0 (A0)');
+assert(clampStartOctave(3, 'all') === 0, 'Start octave is 0 for all 88 keys (starts at A0)');
+
+// Test 2 octaves layout starting from A0
+const layoutA0 = computePianoLayout({
+  screenWidth: 900,
+  screenHeight: 450,
+  octaves: 2,
+  startOctave: 0,
+  pianoHeightRatio: 0.6,
+});
+assert(layoutA0.startMidi === 21, 'startOctave 0 starts at MIDI 21 (A0)');
+assert(layoutA0.endMidi === 45, '2 octaves from A0 ends at MIDI 45 (A2)');
+assert(layoutA0.whiteKeys.length === 15, '2 octaves from A0 has 15 white keys');
+assert(layoutA0.allKeys[0].noteName === 'A0', 'First key is A0');
 
 console.log('\n--- Testing Continuous Pan Coordinates (getMidiKeyBoundsInLayout) ---');
 // In layout3 (C3 to C6, startMidi = 48, whiteKeyWidth = 900 / 22):
