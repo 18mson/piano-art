@@ -7,6 +7,7 @@ import { Controls } from '../components/Controls';
 import { KeyboardGuide } from '../components/KeyboardGuide';
 import { SongSelectorModal } from '../components/SongSelectorModal';
 import { SongPlayerBar } from '../components/SongPlayerBar';
+import { FileDropZone } from '../components/FileDropZone';
 import { usePianoStore } from '../store/pianoStore';
 import { audioEngine } from '../lib/audio';
 import { isThreeOctavesMode } from '../lib/input/keyboard';
@@ -121,6 +122,7 @@ export default function Home() {
       {/* Modal Dialogs (Rendered at top level with full screen backdrops) */}
       <KeyboardGuide />
       <SongSelectorModal />
+      <FileDropZone />
 
       {/* Initial User Gesture Audio Overlay */}
       {!isAudioStarted && (

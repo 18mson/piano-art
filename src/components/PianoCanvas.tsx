@@ -155,9 +155,12 @@ export const PianoCanvas: React.FC = () => {
         t.visible = false;
       });
 
-      const showLabels = storeRef.current.showNoteNames;
-      const showShortcuts = storeRef.current.showKeyboardShortcuts;
-      const baseOctave = storeRef.current.keyboardBaseOctave;
+      const {
+        showNoteNames: showLabels,
+        showKeyboardShortcuts: showShortcuts,
+        keyboardBaseOctave: baseOctave,
+        octaves: activeOctaves,
+      } = usePianoStore.getState();
       let textIdx = 0;
 
       // 1. Draw White Keys
@@ -169,17 +172,17 @@ export const PianoCanvas: React.FC = () => {
           renderWhiteKey(whiteKeysGraphics, key, isPressed, color);
 
           const keyBinding = showShortcuts
-            ? getKeyboardKeyForMidi(key.midi, baseOctave, storeRef.current.octaves)
+            ? getKeyboardKeyForMidi(key.midi, baseOctave, activeOctaves)
             : null;
 
-          if (keyBinding && key.width >= 16) {
+          if (keyBinding && key.width >= 8) {
             const isLower = keyBinding.row === 'lower';
-            // Badge dimensions
-            const badgeW = Math.max(16, Math.min(26, Math.floor(key.width * 0.72)));
-            const badgeH = Math.max(16, Math.min(24, Math.floor(badgeW * 0.95)));
+            // Badge dimensions scaled with key width down to mobile/88-keys sizes
+            const badgeW = Math.max(10, Math.min(26, Math.floor(key.width * 0.78)));
+            const badgeH = Math.max(12, Math.min(24, Math.floor(badgeW * 0.95)));
             const badgeX = Math.round(key.x + (key.width - badgeW) / 2);
             const badgeY = Math.round(key.y + key.height - badgeH - 8);
-            const radius = 4;
+            const radius = Math.min(4, Math.floor(badgeW / 3));
 
             // Draw stylish keycap badge
             if (isPressed) {
@@ -247,16 +250,16 @@ export const PianoCanvas: React.FC = () => {
           renderBlackKey(blackKeysGraphics, key, isPressed, color);
 
           const keyBinding = showShortcuts
-            ? getKeyboardKeyForMidi(key.midi, baseOctave, storeRef.current.octaves)
+            ? getKeyboardKeyForMidi(key.midi, baseOctave, activeOctaves)
             : null;
 
-          if (keyBinding && key.width >= 12) {
+          if (keyBinding && key.width >= 5) {
             const isLower = keyBinding.row === 'lower';
-            const badgeW = Math.max(12, Math.min(20, Math.floor(key.width * 0.8)));
-            const badgeH = Math.max(12, Math.min(20, Math.floor(badgeW * 0.95)));
+            const badgeW = Math.max(9, Math.min(20, Math.floor(key.width * 0.85)));
+            const badgeH = Math.max(10, Math.min(20, Math.floor(badgeW * 0.95)));
             const badgeX = Math.round(key.x + (key.width - badgeW) / 2);
             const badgeY = Math.round(key.y + key.height - badgeH - 6);
-            const radius = 3;
+            const radius = Math.min(3, Math.floor(badgeW / 3));
 
             // Draw black key shortcut badge
             if (isPressed) {
@@ -632,12 +635,28 @@ export const PianoCanvas: React.FC = () => {
       };
 
       const handleRedrawOnly = () => {
+        const { keyboardBaseOctave, octaves } = usePianoStore.getState();
         if (keyboardHandler) {
-          keyboardHandler.setBaseOctave(storeRef.current.keyboardBaseOctave);
-          keyboardHandler.setOctaves(storeRef.current.octaves);
+          keyboardHandler.setBaseOctave(keyboardBaseOctave);
+          keyboardHandler.setOctaves(octaves);
         }
         redrawKeys();
       };
+
+      // Direct reactive subscription to Zustand for instant, glitch-free label/shortcut toggling
+      const unsubPiano = usePianoStore.subscribe((curr, prev) => {
+        if (
+          curr.showKeyboardShortcuts !== prev.showKeyboardShortcuts ||
+          curr.showNoteNames !== prev.showNoteNames ||
+          curr.keyboardBaseOctave !== prev.keyboardBaseOctave
+        ) {
+          if (keyboardHandler) {
+            keyboardHandler.setBaseOctave(curr.keyboardBaseOctave);
+            keyboardHandler.setOctaves(curr.octaves);
+          }
+          redrawKeys();
+        }
+      });
 
       window.addEventListener('resize', handleResize);
       window.addEventListener('orientationchange', handleResize);
@@ -646,6 +665,7 @@ export const PianoCanvas: React.FC = () => {
 
       // Store cleanup function
       return () => {
+        unsubPiano();
         unbindPointer();
         unbindKeyboard();
         window.removeEventListener('resize', handleResize);

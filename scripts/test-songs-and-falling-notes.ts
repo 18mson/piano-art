@@ -23,6 +23,22 @@ assert(blue?.difficulty === 'Hard', 'YOASOBI - Blue difficulty is Hard');
 assert(blue?.stars === 4, 'YOASOBI - Blue has 4 stars');
 assert(blue?.notes.length !== undefined && blue.notes.length > 30, 'YOASOBI - Blue has rich chorus notes (> 30 notes)');
 
+// Test Rondo alla Turca
+const rondo = getSongById('rondo-alla-turca');
+assert(rondo !== undefined, 'Rondo alla Turca exists in catalog');
+assert(rondo?.artist === 'Wolfgang Amadeus Mozart', 'Artist is Mozart');
+assert(rondo?.difficulty === 'Hard', 'Rondo alla Turca difficulty is Hard');
+assert(rondo?.stars === 4, 'Rondo alla Turca has 4 stars');
+assert(rondo?.notes.length !== undefined && rondo.notes.length > 100, 'Rondo alla Turca has rich note sequence (> 100 notes)');
+
+// Test Interstellar
+const interstellar = getSongById('interstellar-theme');
+assert(interstellar !== undefined, 'Interstellar exists in catalog');
+assert(interstellar?.artist === 'Hans Zimmer', 'Artist is Hans Zimmer');
+assert(interstellar?.difficulty === 'Normal', 'Interstellar difficulty is Normal');
+assert(interstellar?.stars === 3, 'Interstellar has 3 stars');
+assert(interstellar?.notes.length !== undefined && interstellar.notes.length > 80, 'Interstellar has full atmospheric score (> 80 notes)');
+
 // Verify all songs have valid metadata and note sequences
 for (const song of SONGS_CATALOG) {
   assert(song.id.length > 0, `Song ${song.title} has valid ID`);

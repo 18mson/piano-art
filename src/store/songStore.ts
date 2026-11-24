@@ -8,6 +8,7 @@ export type PlaybackMode = 'listen' | 'practice';
 export interface SongStore {
   // State
   activeSong: Song | null;
+  customSongs: Song[];
   isPlaying: boolean;
   currentTime: number;
   playbackSpeed: number; // 0.75, 1, 1.25
@@ -24,6 +25,7 @@ export interface SongStore {
   openSelector: () => void;
   closeSelector: () => void;
   selectSong: (songOrId: Song | string) => void;
+  importCustomSong: (song: Song) => void;
   play: () => void;
   pause: () => void;
   togglePlay: () => void;
@@ -39,6 +41,7 @@ export interface SongStore {
 
 export const useSongStore = create<SongStore>((set, get) => ({
   activeSong: null,
+  customSongs: [],
   isPlaying: false,
   currentTime: 0,
   playbackSpeed: 1.0,
@@ -54,7 +57,12 @@ export const useSongStore = create<SongStore>((set, get) => ({
   closeSelector: () => set({ isSelectorOpen: false }),
 
   selectSong: (songOrId) => {
-    const song = typeof songOrId === 'string' ? getSongById(songOrId) : songOrId;
+    let song: Song | undefined;
+    if (typeof songOrId === 'string') {
+      song = get().customSongs.find((s) => s.id === songOrId) || getSongById(songOrId);
+    } else {
+      song = songOrId;
+    }
     if (!song) return;
 
     // Release any currently sustained/playing notes
@@ -64,6 +72,23 @@ export const useSongStore = create<SongStore>((set, get) => ({
       activeSong: song,
       currentTime: 0,
       isPlaying: true, // auto-start playback upon selection
+      isSelectorOpen: false,
+      score: 0,
+      combo: 0,
+      maxCombo: 0,
+    });
+  },
+
+  importCustomSong: (song: Song) => {
+    inputDispatcher.releaseAll();
+    const existing = get().customSongs;
+    const updatedCustom = [song, ...existing.filter((s) => s.id !== song.id)];
+
+    set({
+      customSongs: updatedCustom,
+      activeSong: song,
+      currentTime: 0,
+      isPlaying: true,
       isSelectorOpen: false,
       score: 0,
       combo: 0,

@@ -1,5 +1,7 @@
 import { Song, SongNote } from './types';
 import { yoasobiBlueSong } from './yoasobiBlue';
+import { rondoAllaTurcaSong } from './rondoAllaTurca';
+import { interstellarSong } from './interstellar';
 
 const LEAD_IN_SECONDS = 2.4; // Grace period so notes fall gracefully from the top of the canvas
 
@@ -563,8 +565,13 @@ export const SONGS_CATALOG: Song[] = [
   happyBirthdaySong,
   canonInDSong,
   furEliseSong,
+  rondoAllaTurcaSong,
+  interstellarSong,
   yoasobiBlueSong,
 ];
+
+export { rondoAllaTurcaSong } from './rondoAllaTurca';
+export { interstellarSong } from './interstellar';
 
 export function getSongById(id: string): Song | undefined {
   return SONGS_CATALOG.find((s) => s.id === id);
