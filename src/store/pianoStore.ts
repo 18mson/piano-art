@@ -77,7 +77,7 @@ export const usePianoStore = create<PianoStore>((set, get) => {
     startOctave: initialStartOctave,
     showNoteNames: saved.showNoteNames ?? true,
     showKeyboardShortcuts: saved.showKeyboardShortcuts ?? true,
-    showKeyboardGuide: saved.showKeyboardGuide ?? true,
+    showKeyboardGuide: saved.showKeyboardGuide ?? false,
     sustain: saved.sustain ?? false,
     keyboardBaseOctave: initialKeyboardBaseOctave,
     quality: saved.quality ?? 'high',

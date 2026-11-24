@@ -10,15 +10,15 @@ import { SongPlayerBar } from '../components/SongPlayerBar';
 import { usePianoStore } from '../store/pianoStore';
 import { audioEngine } from '../lib/audio';
 import { isThreeOctavesMode } from '../lib/input/keyboard';
-import { Play, Sparkles, Keyboard, RotateCcw } from 'lucide-react';
+import { Play, Music2, Keyboard } from 'lucide-react';
 
 const DynamicPianoCanvas = dynamic(
   () => import('../components/PianoCanvas').then((m) => m.PianoCanvas),
   {
     ssr: false,
     loading: () => (
-      <div className="flex-1 w-full h-full bg-slate-950 flex items-center justify-center text-slate-500 font-mono text-sm">
-        Initializing PixiJS Engine...
+      <div className="flex-1 w-full h-full bg-slate-950 flex items-center justify-center text-slate-400 text-sm">
+        Memuat mesin piano...
       </div>
     ),
   }
@@ -29,14 +29,12 @@ export default function Home() {
     octaves,
     isAudioStarted,
     setAudioStarted,
-    audioReady,
     setAudioReady,
     keyboardBaseOctave,
     isMobile,
   } = usePianoStore();
 
-  const [isPortrait, setIsPortrait] = useState(false);
-  const [loadPercent, setLoadPercent] = useState(0);
+  const [, setIsPortrait] = useState(false);
 
   useEffect(() => {
     // Check orientation
@@ -54,7 +52,6 @@ export default function Home() {
     // Subscribe to audio engine status
     const unsubAudio = audioEngine.subscribe((state) => {
       setAudioReady(state.isReady, state.loadProgress);
-      setLoadPercent(state.loadProgress);
     });
 
     return () => {
@@ -71,75 +68,99 @@ export default function Home() {
 
   return (
     <main className="relative flex flex-col w-screen h-screen overflow-hidden bg-slate-950 select-none">
-      {/* Top Section: Mini-map 88-key strip with auto-snap range selector */}
-      <MiniMap />
+      {/* Top Section: Unified Header Shell (MiniMap, Controls, and Docked Player Bar) */}
+      <header className="flex flex-col shrink-0 z-20">
+        <MiniMap />
+        <Controls />
+        <SongPlayerBar />
+      </header>
 
-      {/* Middle Top: Controls Bar */}
-      <Controls />
-
-      {/* Main Piano Canvas */}
+      {/* Main Piano Canvas - 100% Unobstructed playing area */}
       <div className="relative flex-1 w-full h-full overflow-hidden flex flex-col">
         <DynamicPianoCanvas />
 
-        {/* Floating Song Player Toolbar (Active when a song is playing/selected) */}
-        <SongPlayerBar />
-
-        {/* Desktop Interactive Keyboard Guide */}
-        <KeyboardGuide />
-
-        {/* Keyboard Tracker Bar Hint (Desktop / Large Viewport) */}
+        {/* Desktop Keyboard Range Reminder Badge */}
         {!isMobile && (
-          <div className="absolute top-2 left-3 pointer-events-none bg-slate-950/70 backdrop-blur-sm border border-slate-800/80 px-2.5 py-1 rounded text-[11px] font-mono text-slate-400 flex items-center gap-2 z-10">
-            <Keyboard size={13} className="text-cyan-400" />
+          <div className="absolute top-2 left-3 pointer-events-none bg-slate-900/90 border border-slate-800 px-2.5 py-1 rounded text-xs text-slate-300 flex items-center gap-2 z-10 shadow-sm">
+            <Keyboard size={13} className="text-sky-400 shrink-0" aria-hidden="true" />
             {isThreeOctavesMode(octaves) ? (
-              <span>
-                Tombol PC (3 Oktaf): <strong className="text-cyan-300 font-normal">Z–/</strong> (C{keyboardBaseOctave}) &amp; <strong className="text-purple-300 font-normal">Q–]</strong> (F{keyboardBaseOctave + 1}..C{keyboardBaseOctave + 3}) • Geser Oktaf: <strong className="text-amber-300 font-normal">◄ ►</strong>
+              <span className="leading-tight text-[11px]">
+                Tombol PC (3 Oktaf):{' '}
+                <kbd className="px-1 py-0.2 rounded bg-slate-800 border border-slate-700 font-mono text-sky-200">
+                  Z - /
+                </kbd>{' '}
+                (C{keyboardBaseOctave}) &amp;{' '}
+                <kbd className="px-1 py-0.2 rounded bg-slate-800 border border-slate-700 font-mono text-purple-200">
+                  Q - ]
+                </kbd>{' '}
+                (F{keyboardBaseOctave + 1}..C{keyboardBaseOctave + 3}) • Geser Oktaf:{' '}
+                <kbd className="px-1 py-0.2 rounded bg-slate-800 border border-slate-700 font-mono text-amber-300">
+                  ◄ ►
+                </kbd>
               </span>
             ) : (
-              <span>
-                Tombol PC (2 Oktaf): <strong className="text-cyan-300 font-normal">Q–U</strong> (C{keyboardBaseOctave}) &amp; <strong className="text-purple-300 font-normal">C–/</strong> (C{keyboardBaseOctave + 1}) • Geser Oktaf: <strong className="text-amber-300 font-normal">◄ ►</strong>
+              <span className="leading-tight text-[11px]">
+                Tombol PC (2 Oktaf):{' '}
+                <kbd className="px-1 py-0.2 rounded bg-slate-800 border border-slate-700 font-mono text-sky-200">
+                  Q - U
+                </kbd>{' '}
+                (C{keyboardBaseOctave}) &amp;{' '}
+                <kbd className="px-1 py-0.2 rounded bg-slate-800 border border-slate-700 font-mono text-purple-200">
+                  C - /
+                </kbd>{' '}
+                (C{keyboardBaseOctave + 1}) • Geser Oktaf:{' '}
+                <kbd className="px-1 py-0.2 rounded bg-slate-800 border border-slate-700 font-mono text-amber-300">
+                  ◄ ►
+                </kbd>
               </span>
             )}
           </div>
         )}
       </div>
 
-      {/* Song Selector Modal Dialog */}
+      {/* Modal Dialogs (Rendered at top level with full screen backdrops) */}
+      <KeyboardGuide />
       <SongSelectorModal />
 
       {/* Initial User Gesture Audio Overlay */}
       {!isAudioStarted && (
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="welcome-title"
           onClick={handleStartAudio}
           onTouchStart={handleStartAudio}
-          className="absolute inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex flex-col items-center justify-center cursor-pointer transition-all p-4 select-none touch-none"
+          className="absolute inset-0 z-50 bg-slate-950/90 flex flex-col items-center justify-center cursor-pointer p-4 select-none touch-none"
         >
-          <div className="max-w-md w-full bg-slate-900 border border-slate-700/80 rounded-xl p-8 flex flex-col items-center text-center shadow-2xl space-y-6">
-            <div className="w-16 h-16 rounded-full bg-cyan-500/20 border border-cyan-400 flex items-center justify-center text-cyan-300 shadow-[0_0_20px_rgba(6,182,212,0.4)]">
-              <Play size={28} className="translate-x-0.5" />
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-xl p-6 sm:p-8 flex flex-col items-center text-center shadow-xl space-y-5"
+          >
+            <div className="w-14 h-14 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-sky-400">
+              <Music2 size={26} aria-hidden="true" />
             </div>
 
             <div className="space-y-2">
-              <h1 className="text-2xl font-bold font-mono tracking-tight text-white flex items-center justify-center gap-2">
-                <span>PIXEL PIANO</span>
-                <Sparkles size={18} className="text-cyan-400" />
+              <h1 id="welcome-title" className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                Grand Piano
               </h1>
-              <p className="text-sm font-mono text-slate-400">
-                Salamander Grand Piano engine ready.
-                <br />
-                Tap anywhere to start audio.
+              <p className="text-sm text-slate-300 leading-relaxed">
+                Instrumen piano digital dengan sampel autentik Salamander Grand Piano.
+                Tekan tombol di bawah atau ketuk layar untuk mengaktifkan suara.
               </p>
             </div>
 
             <button
               type="button"
-              className="w-full py-3 px-6 rounded-lg bg-cyan-500 hover:bg-cyan-400 active:bg-cyan-600 text-slate-950 font-bold font-mono text-sm tracking-wide shadow-[0_0_15px_rgba(6,182,212,0.5)] transition-all"
+              onClick={handleStartAudio}
+              className="w-full py-3 px-5 rounded-lg bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white font-semibold text-sm transition-colors flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
             >
-              START PIANO
+              <Play size={16} className="fill-current" aria-hidden="true" />
+              <span>Mulai Memainkan Piano</span>
             </button>
 
-            <div className="text-[11px] font-mono text-slate-500 space-y-1">
-              <p>Supports Multitouch chords, Glissando, Web MIDI, and PC Keyboard</p>
+            <div className="pt-2 border-t border-slate-800/80 w-full text-xs text-slate-400 space-y-1">
+              <p>Mendukung Multi-touch chords, Keyboard PC, dan MIDI Controller</p>
             </div>
           </div>
         </div>

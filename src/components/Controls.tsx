@@ -4,7 +4,18 @@ import React, { useEffect, useState } from 'react';
 import { usePianoStore } from '../store/pianoStore';
 import { useSongStore } from '../store/songStore';
 import { webMidiHandler, MidiDeviceState } from '../lib/input/midi';
-import { Volume2, Music, Sparkles, Sliders, Radio, AlertCircle, Keyboard, Maximize, Minimize, Disc3 } from 'lucide-react';
+import {
+  Volume2,
+  Music,
+  SlidersHorizontal,
+  Radio,
+  AlertCircle,
+  Keyboard,
+  Maximize,
+  Minimize,
+  Disc3,
+  BookOpen,
+} from 'lucide-react';
 
 export const Controls: React.FC = () => {
   const {
@@ -86,8 +97,6 @@ export const Controls: React.FC = () => {
   };
 
   // Options configuration
-  // For mobile portrait (vertical): 1, 2, 3 octaves gives comfortable touch targets
-  // For mobile landscape (miring): 1, 2, 3, 4, 5 octaves
   const mobilePortraitOptions: (number | 'all')[] = [1, 2, 3];
   const mobileLandscapeOptions: (number | 'all')[] = [1, 2, 3, 4, 5];
   const mobileOptions: (number | 'all')[] = isPortrait ? mobilePortraitOptions : mobileLandscapeOptions;
@@ -106,14 +115,24 @@ export const Controls: React.FC = () => {
   const isWidthNarrow = currentKeyWidth < minKeyWidth;
 
   return (
-    <div className="w-full bg-slate-950/90 backdrop-blur-md px-3 py-1.5 border-b border-slate-800 text-slate-200 flex flex-wrap items-center justify-between gap-2 z-20 select-none safe-p-left safe-p-right">
+    <nav
+      aria-label="Pengaturan Instrumen"
+      className="w-full bg-slate-900/95 border-b border-slate-800/90 px-3 py-1.5 text-slate-200 flex flex-wrap items-center justify-between gap-2 z-20 select-none safe-p-left safe-p-right"
+    >
       {/* Left: Octave Selection & Warning */}
       <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-xs font-mono font-medium text-slate-400 uppercase tracking-wider flex items-center gap-1">
-          <Sliders size={13} className="text-cyan-400" />
-          Octaves:
-        </span>
-        <div className="flex items-center bg-slate-900/90 rounded border border-slate-800 p-0.5 gap-0.5">
+        <div className="flex items-center gap-1.5 text-xs font-medium text-slate-300">
+          <SlidersHorizontal size={14} className="text-slate-400" aria-hidden="true" />
+          <span className="text-[11px] font-semibold tracking-wide uppercase text-slate-400">
+            Oktaf
+          </span>
+        </div>
+
+        <div
+          role="group"
+          aria-label="Pilihan rentang oktaf"
+          className="flex items-center bg-slate-950/80 rounded-md border border-slate-800 p-0.5 gap-0.5"
+        >
           {options.map((opt) => {
             const isSelected = octaves === opt;
             const w = getKeyWidthForOption(opt);
@@ -124,20 +143,25 @@ export const Controls: React.FC = () => {
                 key={opt}
                 type="button"
                 onClick={() => setOctaves(opt)}
+                aria-pressed={isSelected}
                 title={
                   isTooNarrow
-                    ? `Warning: Key width (${Math.round(w)}px) is below recommended ${minKeyWidth}px`
-                    : `${opt === 'all' ? 'All 88 Keys' : `${opt} Octaves`}`
+                    ? `Perhatian: Lebar tuts (${Math.round(w)}px) di bawah anjuran ${minKeyWidth}px`
+                    : opt === 'all'
+                    ? '88 Tuts Lengkap'
+                    : `${opt} Oktaf`
                 }
-                className={`px-2.5 py-1 text-xs font-mono rounded transition-all flex items-center gap-1 ${
+                className={`min-h-[32px] sm:min-h-[28px] px-2.5 py-1 text-xs rounded transition-colors flex items-center gap-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400 ${
                   isSelected
-                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 shadow-[0_0_8px_rgba(6,182,212,0.3)] font-bold'
+                    ? 'bg-slate-800 text-sky-300 border border-sky-400/60 font-semibold'
                     : isTooNarrow
-                    ? 'text-amber-400/80 hover:bg-slate-800/80 hover:text-amber-300'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    ? 'text-amber-400/90 hover:bg-slate-800/80 hover:text-amber-300'
+                    : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60'
                 }`}
               >
-                {opt === 'all' ? '88' : `${opt} Oct`}
+                <span className="font-mono text-[11px]">
+                  {opt === 'all' ? '88' : `${opt} Oct`}
+                </span>
                 {isTooNarrow && !isSelected && (
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />
                 )}
@@ -147,62 +171,71 @@ export const Controls: React.FC = () => {
         </div>
 
         {isWidthNarrow && (
-          <div className="flex items-center gap-1 text-[11px] font-mono text-amber-400 bg-amber-950/40 border border-amber-800/60 px-2 py-0.5 rounded animate-pulse">
-            <AlertCircle size={12} />
-            <span>Narrow keys ({Math.round(currentKeyWidth)}px &lt; {minKeyWidth}px)</span>
+          <div className="flex items-center gap-1.5 text-[11px] text-amber-300 bg-amber-950/50 border border-amber-800/70 px-2 py-0.5 rounded">
+            <AlertCircle size={13} aria-hidden="true" />
+            <span>Tuts rapat ({Math.round(currentKeyWidth)}px)</span>
           </div>
         )}
       </div>
 
       {/* Right: Songs, Sustain, Labels, MIDI status */}
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
         {/* Falling Notes Song Selection Button */}
         <button
           type="button"
           onClick={openSelector}
-          title="Pilih Lagu & Panduan Not Jatuh (Falling Notes)"
-          className={`flex items-center gap-1.5 px-3 py-1 text-xs font-mono font-medium rounded border transition-all ${
+          aria-haspopup="dialog"
+          title="Buka pilihan lagu untuk panduan not jatuh"
+          className={`min-h-[32px] sm:min-h-[28px] flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-md border transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400 ${
             activeSong
-              ? 'bg-gradient-to-r from-purple-500/25 to-cyan-500/25 text-cyan-300 border-cyan-400/60 shadow-[0_0_12px_rgba(6,182,212,0.4)]'
-              : 'bg-slate-900/80 text-slate-300 border-slate-700 hover:text-white hover:border-slate-600 hover:bg-slate-800'
+              ? 'bg-slate-800 text-sky-200 border-sky-500/70'
+              : 'bg-slate-950/70 text-slate-300 border-slate-700/80 hover:text-white hover:border-slate-600 hover:bg-slate-800/70'
           }`}
         >
-          <Disc3 size={13} className={`text-cyan-400 ${activeSong ? 'animate-spin' : ''}`} style={{ animationDuration: '3s' }} />
-          <span>{activeSong ? (activeSong.title.length > 12 ? `${activeSong.title.slice(0, 10)}…` : activeSong.title) : 'Lagu'}</span>
+          <Disc3
+            size={13}
+            className={`text-sky-400 ${activeSong ? 'animate-spin' : ''}`}
+            style={{ animationDuration: '4s' }}
+            aria-hidden="true"
+          />
+          <span>{activeSong ? (activeSong.title.length > 14 ? `${activeSong.title.slice(0, 12)}…` : activeSong.title) : 'Pilih Lagu'}</span>
         </button>
 
         {/* Sustain Pedal Toggle */}
         <button
           type="button"
           onClick={toggleSustain}
-          title="Toggle Sustain Pedal (Holds notes after release)"
-          className={`flex items-center gap-1.5 px-3 py-1 text-xs font-mono font-medium rounded border transition-all ${
+          aria-pressed={sustain}
+          title="Pedal Sustain (tahan nada setelah tuts dilepas)"
+          className={`min-h-[32px] sm:min-h-[28px] flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-md border transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-400 ${
             sustain
-              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/60 shadow-[0_0_10px_rgba(16,185,129,0.35)]'
-              : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:text-slate-300 hover:bg-slate-800'
+              ? 'bg-emerald-950/70 text-emerald-300 border-emerald-600/70 font-semibold'
+              : 'bg-slate-950/70 text-slate-400 border-slate-800 hover:text-slate-200 hover:bg-slate-800/60'
           }`}
         >
           <span
             className={`w-2 h-2 rounded-full transition-colors ${
-              sustain ? 'bg-emerald-400 shadow-[0_0_6px_#34d399]' : 'bg-slate-600'
+              sustain ? 'bg-emerald-400' : 'bg-slate-600'
             }`}
+            aria-hidden="true"
           />
-          Sustain
+          <span>Sustain</span>
         </button>
 
         {/* Note Labels Toggle */}
         <button
           type="button"
           onClick={toggleNoteNames}
-          title="Toggle Note Names on Keys"
-          className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono rounded border transition-all ${
+          aria-pressed={showNoteNames}
+          title="Tampilkan label nama not pada tuts piano"
+          className={`min-h-[32px] sm:min-h-[28px] flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md border transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400 ${
             showNoteNames
-              ? 'bg-purple-500/20 text-purple-300 border-purple-500/50 shadow-[0_0_8px_rgba(168,85,247,0.3)]'
-              : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:text-slate-300 hover:bg-slate-800'
+              ? 'bg-slate-800 text-sky-200 border-sky-500/60 font-semibold'
+              : 'bg-slate-950/70 text-slate-400 border-slate-800 hover:text-slate-200 hover:bg-slate-800/60'
           }`}
         >
-          <Music size={13} className={showNoteNames ? 'text-purple-400' : 'text-slate-500'} />
-          Notes
+          <Music size={13} className={showNoteNames ? 'text-sky-400' : 'text-slate-500'} aria-hidden="true" />
+          <span>Nama Not</span>
         </button>
 
         {/* PC Keys On-Canvas Badges Toggle (Desktop) */}
@@ -210,15 +243,16 @@ export const Controls: React.FC = () => {
           <button
             type="button"
             onClick={toggleKeyboardShortcuts}
-            title="Tampilkan / Sembunyikan Label Huruf Keyboard PC di Tuts Piano"
-            className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono rounded border transition-all ${
+            aria-pressed={showKeyboardShortcuts}
+            title="Tampilkan huruf keyboard PC di atas tuts piano"
+            className={`min-h-[28px] flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md border transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400 ${
               showKeyboardShortcuts
-                ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50 shadow-[0_0_8px_rgba(6,182,212,0.3)] font-semibold'
-                : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:text-slate-300 hover:bg-slate-800'
+                ? 'bg-slate-800 text-sky-200 border-sky-500/60 font-semibold'
+                : 'bg-slate-950/70 text-slate-400 border-slate-800 hover:text-slate-200 hover:bg-slate-800/60'
             }`}
           >
-            <Keyboard size={13} className={showKeyboardShortcuts ? 'text-cyan-400' : 'text-slate-500'} />
-            Tombol PC
+            <Keyboard size={13} className={showKeyboardShortcuts ? 'text-sky-400' : 'text-slate-500'} aria-hidden="true" />
+            <span>Label PC</span>
           </button>
         )}
 
@@ -227,15 +261,16 @@ export const Controls: React.FC = () => {
           <button
             type="button"
             onClick={toggleKeyboardGuide}
-            title="Tampilkan / Sembunyikan Panduan Visual Keyboard PC"
-            className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono rounded border transition-all ${
+            aria-pressed={showKeyboardGuide}
+            title="Buka panduan visual tuts keyboard PC"
+            className={`min-h-[28px] flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md border transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400 ${
               showKeyboardGuide
-                ? 'bg-blue-500/20 text-blue-300 border-blue-500/50 shadow-[0_0_8px_rgba(59,130,246,0.3)] font-semibold'
-                : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:text-slate-300 hover:bg-slate-800'
+                ? 'bg-slate-800 text-sky-200 border-sky-500/60 font-semibold'
+                : 'bg-slate-950/70 text-slate-400 border-slate-800 hover:text-slate-200 hover:bg-slate-800/60'
             }`}
           >
-            <Sparkles size={13} className={showKeyboardGuide ? 'text-blue-400' : 'text-slate-500'} />
-            Panduan
+            <BookOpen size={13} className={showKeyboardGuide ? 'text-sky-400' : 'text-slate-500'} aria-hidden="true" />
+            <span>Panduan</span>
           </button>
         )}
 
@@ -244,29 +279,30 @@ export const Controls: React.FC = () => {
           <button
             type="button"
             onClick={toggleFullscreen}
-            title={isFullscreen ? 'Keluar Fullscreen' : (isPortrait ? 'Putar ke Layar Penuh Landscape (Miring)' : 'Layar Penuh')}
-            className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono rounded border transition-all ${
+            aria-label={isFullscreen ? 'Keluar Layar Penuh' : (isPortrait ? 'Putar ke Layar Penuh Horizontal' : 'Layar Penuh')}
+            title={isFullscreen ? 'Keluar Layar Penuh' : (isPortrait ? 'Putar ke Layar Penuh Horizontal' : 'Layar Penuh')}
+            className={`min-h-[32px] flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md border transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400 ${
               isFullscreen
-                ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50 shadow-[0_0_8px_rgba(6,182,212,0.3)] font-semibold'
-                : 'bg-slate-900/80 text-slate-300 border-slate-700 hover:text-white hover:bg-slate-800'
+                ? 'bg-slate-800 text-sky-200 border-sky-500/60 font-semibold'
+                : 'bg-slate-950/70 text-slate-300 border-slate-700 hover:text-white hover:bg-slate-800/70'
             }`}
           >
-            {isFullscreen ? <Minimize size={13} /> : <Maximize size={13} />}
-            <span>{isPortrait ? 'Miring' : 'Full'}</span>
+            {isFullscreen ? <Minimize size={14} aria-hidden="true" /> : <Maximize size={14} aria-hidden="true" />}
+            <span>{isPortrait ? 'Miring' : 'Penuh'}</span>
           </button>
         )}
 
         {/* MIDI Connection Indicator */}
         {midiState.isSupported && (
           <div
-            title={midiState.isConnected ? `Connected: ${midiState.deviceName}` : 'Web MIDI ready (connect any USB/Bluetooth MIDI keyboard)'}
-            className={`flex items-center gap-1.5 px-2 py-1 text-[11px] font-mono rounded border ${
+            title={midiState.isConnected ? `Terhubung: ${midiState.deviceName}` : 'Web MIDI siap (sambungkan keyboard MIDI USB atau Bluetooth)'}
+            className={`flex items-center gap-1.5 px-2 py-1 text-xs rounded-md border ${
               midiState.isConnected
-                ? 'bg-cyan-950/40 text-cyan-300 border-cyan-800/60'
-                : 'bg-slate-900/60 text-slate-500 border-slate-800/60'
+                ? 'bg-sky-950/60 text-sky-300 border-sky-800/80 font-medium'
+                : 'bg-slate-950/50 text-slate-500 border-slate-800'
             }`}
           >
-            <Radio size={12} className={midiState.isConnected ? 'text-cyan-400 animate-pulse' : 'text-slate-600'} />
+            <Radio size={12} className={midiState.isConnected ? 'text-sky-400' : 'text-slate-600'} aria-hidden="true" />
             <span className="hidden sm:inline">
               {midiState.isConnected ? (midiState.deviceName?.split(' ')[0] || 'MIDI') : 'MIDI'}
             </span>
@@ -275,15 +311,15 @@ export const Controls: React.FC = () => {
 
         {/* Audio Engine Status */}
         <div
-          title={audioReady ? 'Salamander Grand Piano samples loaded' : 'Audio engine loading...'}
-          className="flex items-center gap-1 px-2 py-1 text-[11px] font-mono rounded border border-slate-800 bg-slate-900/50 text-slate-400"
+          title={audioReady ? 'Sampel Salamander Grand Piano siap' : 'Memuat sampel audio...'}
+          className="flex items-center gap-1 px-2 py-1 text-xs rounded-md border border-slate-800 bg-slate-950/50 text-slate-400"
         >
-          <Volume2 size={12} className={audioReady ? 'text-emerald-400' : 'text-amber-400 animate-pulse'} />
-          <span className="text-[10px] hidden md:inline">
-            {audioReady ? 'Grand Piano' : 'Loading...'}
+          <Volume2 size={13} className={audioReady ? 'text-emerald-400' : 'text-amber-400'} aria-hidden="true" />
+          <span className="text-[11px] hidden md:inline">
+            {audioReady ? 'Grand Piano' : 'Memuat audio...'}
           </span>
         </div>
       </div>
-    </div>
+    </nav>
   );
 };

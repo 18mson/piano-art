@@ -3,18 +3,17 @@ import { Song, SongNote } from './types';
 // YOASOBI - Blue (群青 / Gunjou)
 // Key: Bb Major / G minor
 // BPM: 132
-// Signature Chorus section with melody & left-hand chord progression
+// Full extended arrangement: Intro Chorus -> Verse -> Pre-Chorus -> Climactic Chorus -> Outro
 
 const BPM = 132;
 const beat = 60 / BPM; // ~0.4545s
-const eighth = beat / 2; // ~0.227s
-const quarter = beat;    // ~0.455s
-const half = beat * 2;   // ~0.909s
+const LEAD_IN = 2.4;   // Grace period so notes fall from the top of the canvas
 
 // MIDI helper note constants for Bb Major
 const Bb2 = 46, C3 = 48, D3 = 50, Eb3 = 51, F3 = 53, G3 = 55, A3 = 57, Bb3 = 58;
 const C4 = 60, D4 = 62, Eb4 = 63, F4 = 65, G4 = 67, A4 = 69, Bb4 = 70;
 const C5 = 72, D5 = 74, Eb5 = 75, F5 = 77, G5 = 79, A5 = 81, Bb5 = 82;
+const C6 = 84, D6 = 86;
 
 function buildYoasobiBlueNotes(): SongNote[] {
   const notes: SongNote[] = [];
@@ -22,14 +21,16 @@ function buildYoasobiBlueNotes(): SongNote[] {
   const add = (midi: number, tBeats: number, dBeats: number, hand: 'left' | 'right' = 'right', vel: number = 0.85) => {
     notes.push({
       midi,
-      time: Math.round(tBeats * beat * 1000) / 1000,
+      time: Math.round((LEAD_IN + tBeats * beat) * 1000) / 1000,
       duration: Math.round(dBeats * beat * 1000) / 1000,
       hand,
       velocity: vel,
     });
   };
 
-  // --- Intro Chorus Hook (Ah... subete o kakete...) ---
+  // ==========================================
+  // SECTION 1: Intro Chorus Hook (Beats 0..44)
+  // ==========================================
   // Pickup: "Ah..."
   add(Bb4, 2.0, 1.5, 'right', 0.9);
 
@@ -135,13 +136,185 @@ function buildYoasobiBlueNotes(): SongNote[] {
   add(D5, 42.5, 0.5, 'right');
   add(C5, 43.0, 0.75, 'right');
 
-  // Measure 11: Final Resolution chord | Left: Bb2 + F3 + Bb3, Right: D4 + F4 + Bb4
-  add(Bb2, 44.0, 4.0, 'left', 0.85);
-  add(F3, 44.0, 4.0, 'left', 0.8);
-  add(Bb3, 44.0, 4.0, 'left', 0.75);
-  add(D4, 44.0, 4.0, 'right', 0.75);
-  add(F4, 44.0, 4.0, 'right', 0.75);
-  add(Bb4, 44.0, 4.0, 'right', 0.9);
+  // Transition bridge (Beats 44..48)
+  add(Bb2, 44.0, 3.5, 'left', 0.8);
+  add(F3, 44.0, 3.5, 'left', 0.75);
+  add(D4, 44.0, 1.5, 'right', 0.8);
+  add(F4, 45.5, 1.5, 'right', 0.8);
+  add(Bb4, 47.0, 1.0, 'right', 0.85);
+
+  // ==========================================
+  // SECTION 2: Verse 1 - Groovy Piano (Beats 48..80)
+  // "Ah, itsumo no you ni sugite iku hibi ni..."
+  // ==========================================
+  // M12: Eb chord
+  add(Eb3, 48.0, 1.8, 'left', 0.7);
+  add(G3, 50.0, 1.8, 'left', 0.7);
+  add(G4, 48.0, 0.5, 'right');
+  add(G4, 48.5, 0.5, 'right');
+  add(F4, 49.0, 0.5, 'right');
+  add(Eb4, 49.5, 0.5, 'right');
+  add(F4, 50.0, 1.0, 'right');
+  add(G4, 51.0, 0.75, 'right');
+
+  // M13: F chord
+  add(F3, 52.0, 1.8, 'left', 0.7);
+  add(A3, 54.0, 1.8, 'left', 0.7);
+  add(F4, 52.0, 0.5, 'right');
+  add(F4, 52.5, 0.5, 'right');
+  add(Eb4, 53.0, 0.5, 'right');
+  add(D4, 53.5, 0.5, 'right');
+  add(Eb4, 54.0, 1.0, 'right');
+  add(F4, 55.0, 0.75, 'right');
+
+  // M14: Gm chord
+  add(G3, 56.0, 1.8, 'left', 0.7);
+  add(Bb3, 58.0, 1.8, 'left', 0.7);
+  add(D4, 56.0, 0.5, 'right');
+  add(D4, 56.5, 0.5, 'right');
+  add(C4, 57.0, 0.5, 'right');
+  add(Bb3, 57.5, 0.5, 'right');
+  add(C4, 58.0, 1.0, 'right');
+  add(D4, 59.0, 0.75, 'right');
+
+  // M15: Bb chord
+  add(Bb2, 60.0, 1.8, 'left', 0.75);
+  add(F3, 62.0, 1.8, 'left', 0.7);
+  add(F4, 60.0, 0.5, 'right');
+  add(G4, 60.5, 0.5, 'right');
+  add(Bb4, 61.0, 1.0, 'right');
+  add(C5, 62.0, 0.5, 'right');
+  add(D5, 63.0, 1.0, 'right');
+
+  // M16: Eb chord repeat verse phrase
+  add(Eb3, 64.0, 1.8, 'left', 0.7);
+  add(G4, 64.0, 0.5, 'right');
+  add(G4, 64.5, 0.5, 'right');
+  add(F4, 65.0, 0.5, 'right');
+  add(Eb4, 65.5, 0.5, 'right');
+  add(F4, 66.0, 1.0, 'right');
+  add(G4, 67.0, 0.75, 'right');
+
+  // M17: F chord
+  add(F3, 68.0, 1.8, 'left', 0.7);
+  add(A4, 68.0, 0.5, 'right');
+  add(G4, 68.5, 0.5, 'right');
+  add(F4, 69.0, 0.5, 'right');
+  add(G4, 69.5, 0.5, 'right');
+  add(A4, 70.0, 1.5, 'right');
+
+  // M18: Pre-chorus rise
+  add(G3, 72.0, 1.8, 'left', 0.75);
+  add(D4, 72.0, 1.8, 'left', 0.7);
+  add(Bb4, 72.0, 0.5, 'right');
+  add(C5, 72.5, 0.5, 'right');
+  add(D5, 73.0, 0.5, 'right');
+  add(F5, 73.5, 0.5, 'right');
+  add(G5, 74.0, 1.5, 'right');
+
+  // M19: Build up drums/bass into Chorus 2
+  add(F3, 76.0, 0.75, 'left', 0.8);
+  add(F3, 77.0, 0.75, 'left', 0.85);
+  add(F3, 78.0, 0.75, 'left', 0.9);
+  add(F3, 79.0, 0.75, 'left', 0.95);
+  add(A4, 76.0, 0.5, 'right');
+  add(Bb4, 77.0, 0.5, 'right');
+  add(C5, 78.0, 0.5, 'right');
+  add(D5, 79.0, 0.75, 'right');
+
+  // ==========================================
+  // SECTION 3: Grand Climax Chorus (Beats 80..120)
+  // Full energetic octave chords in right hand
+  // ==========================================
+  // "Ah... subete o kakete!"
+  add(Bb4, 80.0, 1.5, 'right', 0.95);
+  add(Bb5, 80.0, 1.5, 'right', 0.9);
+
+  // M21: Eb Major
+  add(Eb3, 82.0, 3.5, 'left', 0.85);
+  add(Bb3, 82.0, 3.5, 'left', 0.8);
+  add(G4, 82.0, 1.8, 'left', 0.75);
+  add(Bb4, 82.0, 0.5, 'right', 0.9);
+  add(C5, 82.5, 0.5, 'right', 0.9);
+  add(D5, 83.0, 0.75, 'right', 0.95);
+  add(F5, 83.75, 1.0, 'right', 0.95);
+
+  // M22: F Major
+  add(F3, 86.0, 3.5, 'left', 0.85);
+  add(C4, 86.0, 3.5, 'left', 0.8);
+  add(A4, 86.0, 1.8, 'left', 0.75);
+  add(D5, 86.0, 0.5, 'right', 0.9);
+  add(C5, 86.5, 0.5, 'right', 0.9);
+  add(Bb4, 87.0, 1.5, 'right', 0.95);
+
+  // M23: D minor
+  add(D3, 90.0, 3.5, 'left', 0.85);
+  add(A3, 90.0, 3.5, 'left', 0.8);
+  add(F4, 90.0, 1.8, 'left', 0.75);
+  add(Bb4, 90.0, 0.5, 'right');
+  add(C5, 90.5, 0.5, 'right');
+  add(D5, 91.0, 0.5, 'right');
+  add(F5, 91.5, 0.5, 'right');
+  add(G5, 92.0, 1.0, 'right', 0.95);
+
+  // M24: G minor
+  add(G3, 94.0, 3.5, 'left', 0.85);
+  add(D4, 94.0, 3.5, 'left', 0.8);
+  add(F5, 94.0, 0.5, 'right');
+  add(D5, 94.5, 0.5, 'right');
+  add(C5, 95.0, 0.5, 'right');
+  add(Bb4, 95.5, 0.5, 'right');
+  add(C5, 96.0, 1.5, 'right');
+
+  // M25: Soaring high phrase "I-ma!"
+  add(Eb3, 98.0, 3.5, 'left', 0.85);
+  add(D5, 98.0, 0.75, 'right');
+  add(F5, 98.75, 1.0, 'right');
+  add(Bb5, 99.75, 1.5, 'right', 0.95);
+
+  // M26: "ji - bun no te de"
+  add(F3, 102.0, 3.5, 'left', 0.85);
+  add(G5, 102.0, 0.5, 'right');
+  add(F5, 102.5, 0.5, 'right');
+  add(D5, 103.0, 0.5, 'right');
+  add(C5, 103.5, 0.5, 'right');
+  add(Bb4, 104.0, 1.0, 'right');
+  add(G4, 105.0, 0.75, 'right');
+
+  // M27: "a - o no se - ka - i e"
+  add(D3, 106.0, 3.5, 'left', 0.85);
+  add(Bb4, 106.0, 0.5, 'right');
+  add(C5, 106.5, 0.5, 'right');
+  add(D5, 107.0, 0.5, 'right');
+  add(F5, 107.5, 0.5, 'right');
+  add(G5, 108.0, 0.5, 'right');
+  add(F5, 108.5, 0.5, 'right');
+  add(D5, 109.0, 0.75, 'right');
+  add(C5, 109.75, 1.0, 'right');
+
+  // ==========================================
+  // SECTION 4: Grand Outro Coda (Beats 110..130)
+  // ==========================================
+  add(Eb3, 112.0, 3.5, 'left', 0.8);
+  add(Bb3, 112.0, 3.5, 'left', 0.75);
+  add(D5, 112.0, 1.0, 'right');
+  add(Bb4, 113.0, 1.0, 'right');
+  add(G4, 114.0, 1.5, 'right');
+
+  add(F3, 116.0, 3.5, 'left', 0.8);
+  add(C4, 116.0, 3.5, 'left', 0.75);
+  add(C5, 116.0, 1.0, 'right');
+  add(A4, 117.0, 1.0, 'right');
+  add(F4, 118.0, 1.5, 'right');
+
+  // Final resounding concert grand chord
+  add(Bb2, 120.0, 6.0, 'left', 0.9);
+  add(F3, 120.0, 6.0, 'left', 0.85);
+  add(Bb3, 120.0, 6.0, 'left', 0.8);
+  add(D4, 120.0, 6.0, 'right', 0.8);
+  add(F4, 120.0, 6.0, 'right', 0.85);
+  add(Bb4, 120.0, 6.0, 'right', 0.95);
+  add(D5, 120.0, 6.0, 'right', 0.9);
 
   // Sort notes chronologically
   notes.sort((a, b) => a.time - b.time || a.midi - b.midi);
@@ -150,7 +323,7 @@ function buildYoasobiBlueNotes(): SongNote[] {
 
 const notes = buildYoasobiBlueNotes();
 const lastNote = notes[notes.length - 1];
-const totalDuration = lastNote ? Math.ceil(lastNote.time + lastNote.duration + 1.0) : 25;
+const totalDuration = lastNote ? Math.ceil(lastNote.time + lastNote.duration + 1.0) : 62;
 
 export const yoasobiBlueSong: Song = {
   id: 'yoasobi-blue',
@@ -163,6 +336,6 @@ export const yoasobiBlueSong: Song = {
   duration: totalDuration,
   suggestedOctaves: 4,
   suggestedStartOctave: 2,
-  description: 'Lagu hit emosional YOASOBI dengan ritme energik dan harmoni piano chorus yang memukau.',
+  description: 'Lagu hit emosional YOASOBI berdurasi lengkap dengan intro chorus, verse piano dinamis, dan klimaks megah.',
   notes,
 };

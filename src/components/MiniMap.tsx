@@ -1,7 +1,10 @@
 'use client';
 
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { usePianoStore } from '../store/pianoStore';
+import { useSongStore } from '../store/songStore';
+import { inputDispatcher } from '../lib/input/dispatcher';
+import { isBlackKey, getPitchColor } from '../lib/music';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const TOTAL_WHITE_KEYS = 52;
@@ -25,6 +28,27 @@ const OCTAVE_MARKERS: { label: string; whiteIdx: number; isMiddleC?: boolean }[]
   { label: 'C8', whiteIdx: 51 },
 ];
 
+// Precompute 88-key horizontal mapping for all MIDI notes 21 (A0) to 108 (C8)
+const WHITE_KEY_INDICES: Record<number, number> = {};
+let wIdx = 0;
+for (let m = 21; m <= 108; m++) {
+  if (!isBlackKey(m)) {
+    WHITE_KEY_INDICES[m] = wIdx++;
+  }
+}
+
+function getMidi88Ratio(midi: number): number {
+  if (midi < 21) return 0;
+  if (midi > 108) return 1;
+  if (!isBlackKey(midi)) {
+    const idx = WHITE_KEY_INDICES[midi] ?? 0;
+    return (idx + 0.5) / TOTAL_WHITE_KEYS;
+  } else {
+    const prevWhiteIdx = WHITE_KEY_INDICES[midi - 1] ?? 0;
+    return (prevWhiteIdx + 1) / TOTAL_WHITE_KEYS;
+  }
+}
+
 export const MiniMap: React.FC = () => {
   const {
     octaves,
@@ -34,8 +58,11 @@ export const MiniMap: React.FC = () => {
   } = usePianoStore();
 
   const stripRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragLeftRatio, setDragLeftRatio] = useState<number | null>(null);
+  const [hasOffscreenLeft, setHasOffscreenLeft] = useState(false);
+  const [hasOffscreenRight, setHasOffscreenRight] = useState(false);
 
   // Compute visual window metrics
   const isAll88 = octaves === 'all';
@@ -59,6 +86,19 @@ export const MiniMap: React.FC = () => {
   const canonicalLeftRatio = isAll88 ? 0 : targetStartWhiteIdx / TOTAL_WHITE_KEYS;
 
   const activeLeftRatio = dragLeftRatio !== null ? dragLeftRatio : canonicalLeftRatio;
+
+  // MIDI bounds of currently visible viewport on the main piano
+  const visibleMinMidi = isAll88
+    ? 21
+    : startOctave === 0
+    ? 21
+    : startOctave * 12 + 12;
+
+  const visibleMaxMidi = isAll88
+    ? 108
+    : startOctave === 0
+    ? Math.min(108, 21 + Math.round(numOctaves * 12))
+    : Math.min(108, (startOctave + numOctaves) * 12 + 12);
 
   const triggerHaptic = () => {
     try {
@@ -166,21 +206,162 @@ export const MiniMap: React.FC = () => {
     }
   };
 
+  // 60FPS Live Preview Canvas: Renders song notes preview across all 88 keys
+  useEffect(() => {
+    let animId: number;
+    const activePressedNotes = new Set<number>();
+    let lastOffscreenCheck = 0;
+
+    const unsubDispatcher = inputDispatcher.addListener((midi, pressed) => {
+      if (pressed) {
+        activePressedNotes.add(midi);
+      } else {
+        activePressedNotes.delete(midi);
+      }
+    });
+
+    const renderPreview = () => {
+      const canvas = canvasRef.current;
+      const container = stripRef.current;
+      if (canvas && container) {
+        const dpr = Math.min(2, window.devicePixelRatio || 1);
+        const w = container.clientWidth;
+        const h = container.clientHeight;
+
+        if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+          canvas.width = Math.round(w * dpr);
+          canvas.height = Math.round(h * dpr);
+        }
+
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.save();
+          ctx.scale(dpr, dpr);
+          ctx.clearRect(0, 0, w, h);
+
+          const { activeSong, currentTime } = useSongStore.getState();
+
+          let offLeft = false;
+          let offRight = false;
+
+          // 1. Render song falling & active notes preview across the entire 88 keys
+          if (activeSong) {
+            const notes = activeSong.notes;
+            const previewWindow = 2.6; // Preview upcoming notes 2.6s before hit
+            const hitLineY = h - 6;
+            const keyColWidth = Math.max(3, Math.min(8, Math.round((w / TOTAL_WHITE_KEYS) * 0.85)));
+
+            for (let i = 0; i < notes.length; i++) {
+              const n = notes[i];
+              if (n.time > currentTime + previewWindow) break;
+              if (n.time + n.duration < currentTime - 0.2) continue;
+
+              const xCenter = getMidi88Ratio(n.midi) * w;
+              const isSounding = currentTime >= n.time && currentTime <= n.time + n.duration;
+              const pitchColor = getPitchColor(n.midi).css;
+
+              // Check if note is outside current visible main keyboard viewport
+              if (!isAll88) {
+                if (n.midi < visibleMinMidi) offLeft = true;
+                if (n.midi > visibleMaxMidi) offRight = true;
+              }
+
+              if (isSounding) {
+                // Sounding note: glowing column and bright key hit bar
+                const grad = ctx.createLinearGradient(0, 0, 0, hitLineY);
+                grad.addColorStop(0, 'rgba(0,0,0,0)');
+                grad.addColorStop(0.7, pitchColor);
+                grad.addColorStop(1, pitchColor);
+
+                ctx.fillStyle = grad;
+                ctx.globalAlpha = 0.4;
+                ctx.fillRect(Math.round(xCenter - keyColWidth / 2), 0, keyColWidth, hitLineY);
+
+                // Bright hit bar at hit-line
+                ctx.fillStyle = pitchColor;
+                ctx.globalAlpha = 0.95;
+                ctx.fillRect(Math.round(xCenter - (keyColWidth + 2) / 2), hitLineY - 2, keyColWidth + 2, 6);
+              } else if (n.time > currentTime) {
+                // Upcoming falling note: descending pill bar
+                const timeDiff = n.time - currentTime;
+                const progress = Math.max(0, Math.min(1, 1 - (timeDiff / previewWindow)));
+                const yBottom = progress * hitLineY;
+                const barHeight = Math.max(4, Math.min(16, (n.duration / previewWindow) * hitLineY));
+                const yTop = Math.max(1, yBottom - barHeight);
+                const actualHeight = Math.max(3, yBottom - yTop);
+
+                ctx.fillStyle = pitchColor;
+                ctx.globalAlpha = 0.35 + progress * 0.6;
+                ctx.fillRect(
+                  Math.round(xCenter - keyColWidth / 2),
+                  Math.round(yTop),
+                  keyColWidth,
+                  Math.round(actualHeight)
+                );
+              }
+            }
+          }
+
+          // 2. Render live pressed keys (player touch/PC keyboard/MIDI)
+          if (activePressedNotes.size > 0) {
+            const keyColWidth = Math.max(4, Math.min(8, Math.round((w / TOTAL_WHITE_KEYS) * 0.9)));
+            const hitLineY = h - 6;
+
+            activePressedNotes.forEach((midi) => {
+              const xCenter = getMidi88Ratio(midi) * w;
+              ctx.fillStyle = '#38bdf8';
+              ctx.globalAlpha = 0.95;
+              ctx.fillRect(Math.round(xCenter - keyColWidth / 2), hitLineY - 3, keyColWidth, 7);
+            });
+          }
+
+          ctx.restore();
+
+          // Periodically update offscreen indicator state (~10Hz) to prevent react render churn
+          const now = performance.now();
+          if (now - lastOffscreenCheck > 100) {
+            lastOffscreenCheck = now;
+            setHasOffscreenLeft((prev) => (prev !== offLeft ? offLeft : prev));
+            setHasOffscreenRight((prev) => (prev !== offRight ? offRight : prev));
+          }
+        }
+      }
+
+      animId = requestAnimationFrame(renderPreview);
+    };
+
+    animId = requestAnimationFrame(renderPreview);
+
+    return () => {
+      cancelAnimationFrame(animId);
+      unsubDispatcher();
+    };
+  }, [isAll88, visibleMinMidi, visibleMaxMidi]);
+
   return (
-    <div className="w-full bg-slate-950/80 backdrop-blur-md border-b border-slate-800/80 select-none flex items-center px-2 py-1 gap-2 z-20 safe-p-left safe-p-right">
+    <section
+      aria-label="Navigasi Rentang 88 Tuts Piano"
+      className="w-full bg-slate-950 border-b border-slate-800/90 select-none flex items-center px-2 py-1.5 gap-2 z-20 safe-p-left safe-p-right"
+    >
       {/* Shift Left Button */}
       <button
         type="button"
         disabled={!canShiftLeft}
         onClick={handleShiftLeft}
-        title="Shift down 1 octave (ArrowLeft)"
-        className={`p-1 rounded text-xs font-mono transition-colors flex items-center justify-center ${
+        aria-label="Geser rentang 1 oktaf ke kiri"
+        title={hasOffscreenLeft ? 'Ada not lagu di oktaf kiri! Klik untuk menggeser' : 'Geser rentang 1 oktaf ke kiri (Panah Kiri)'}
+        className={`relative p-1.5 rounded text-xs transition-all flex items-center justify-center focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400 ${
           canShiftLeft
-            ? 'text-slate-300 hover:text-white hover:bg-slate-800 active:bg-slate-700'
+            ? hasOffscreenLeft
+              ? 'text-sky-200 bg-sky-950/80 border border-sky-500/80 ring-1 ring-sky-400/60 shadow-sm shadow-sky-500/20'
+              : 'text-slate-300 hover:text-white hover:bg-slate-800 active:bg-slate-700'
             : 'text-slate-600 opacity-40 cursor-not-allowed'
         }`}
       >
-        <ChevronLeft size={16} />
+        <ChevronLeft size={16} aria-hidden="true" />
+        {hasOffscreenLeft && canShiftLeft && (
+          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-sky-400 animate-ping" aria-hidden="true" />
+        )}
       </button>
 
       {/* Mini-map 88 keys strip container */}
@@ -190,27 +371,40 @@ export const MiniMap: React.FC = () => {
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
-        className="relative flex-1 h-8 bg-slate-900/90 rounded border border-slate-700/60 overflow-hidden cursor-pointer touch-none"
+        role="slider"
+        aria-label="Pilih posisi tuts piano pada rentang 88 tuts"
+        aria-valuemin={0}
+        aria-valuemax={octaves === 'all' ? 0 : 8 - (typeof octaves === 'number' ? octaves : 1)}
+        aria-valuenow={startOctave}
+        tabIndex={0}
+        className="relative flex-1 h-9 bg-slate-900 rounded border border-slate-700/80 overflow-hidden cursor-pointer touch-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400"
       >
-        {/* Render 52 tiny white keys with subtle octave dividers */}
-        <div className="absolute inset-0 flex">
+        {/* Render 52 white key divider slots */}
+        <div className="absolute inset-0 flex" aria-hidden="true">
           {Array.from({ length: TOTAL_WHITE_KEYS }).map((_, i) => {
             const isCKey = i === 2 || i === 9 || i === 16 || i === 23 || i === 30 || i === 37 || i === 44 || i === 51;
             const isMiddleC = i === 23;
             return (
               <div
                 key={i}
-                className={`flex-1 h-full border-r border-slate-800/40 ${
+                className={`flex-1 h-full border-r border-slate-800/60 ${
                   isMiddleC
-                    ? 'bg-amber-500/15'
+                    ? 'bg-amber-400/15'
                     : isCKey
-                    ? 'bg-cyan-500/10'
-                    : 'bg-slate-300/5'
+                    ? 'bg-sky-400/10'
+                    : 'bg-transparent'
                 }`}
               />
             );
           })}
         </div>
+
+        {/* Live Song Preview Canvas (All 88 keys, upcoming & sounding notes) */}
+        <canvas
+          ref={canvasRef}
+          className="absolute inset-0 pointer-events-none z-10 w-full h-full"
+          aria-hidden="true"
+        />
 
         {/* Octave Markers for ALL octaves across 88 keys */}
         {OCTAVE_MARKERS.map((marker) => {
@@ -223,19 +417,20 @@ export const MiniMap: React.FC = () => {
                 left: `${leftPercent}%`,
                 transform: 'translateX(-50%)',
               }}
+              aria-hidden="true"
             >
               <div
-                className={`rounded-full transition-all ${
+                className={`rounded-full ${
                   marker.isMiddleC
-                    ? 'w-1.5 h-1.5 bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.9)] mt-0.5'
-                    : 'w-1 h-1 bg-slate-500/80 mt-1'
+                    ? 'w-1.5 h-1.5 bg-amber-400 mt-1'
+                    : 'w-1 h-1 bg-slate-500 mt-1.5'
                 }`}
               />
               <span
-                className={`text-[7px] font-mono leading-none mt-0.5 select-none ${
+                className={`text-[9px] font-mono leading-none mt-0.5 select-none font-semibold ${
                   marker.isMiddleC
-                    ? 'text-amber-300 font-bold drop-shadow'
-                    : 'text-slate-400 font-medium'
+                    ? 'text-amber-300'
+                    : 'text-slate-400'
                 }`}
               >
                 {marker.label}
@@ -246,17 +441,18 @@ export const MiniMap: React.FC = () => {
 
         {/* Draggable Active Viewport Window */}
         <div
-          className={`absolute top-0 bottom-0 border-2 rounded ${
+          className={`absolute top-0 bottom-0 border-2 rounded z-20 ${
             isDragging
-              ? 'border-cyan-400 bg-cyan-400/25 shadow-[0_0_12px_rgba(34,211,238,0.5)]'
-              : 'border-cyan-400/80 bg-cyan-500/15 transition-[left,width] duration-200 ease-out'
+              ? 'border-sky-400 bg-sky-500/20'
+              : 'border-sky-400/90 bg-sky-500/15 transition-[left,width] duration-150 ease-out'
           }`}
           style={{
             left: `${activeLeftRatio * 100}%`,
             width: `${windowWidthRatio * 100}%`,
           }}
+          aria-hidden="true"
         >
-          <div className="absolute bottom-0.5 left-1 text-[8px] font-mono font-bold text-cyan-200 pointer-events-none drop-shadow bg-cyan-950/80 px-1 rounded-t border-t border-r border-cyan-400/60 leading-tight">
+          <div className="absolute bottom-0.5 left-1 text-[9px] font-mono font-semibold text-sky-100 pointer-events-none bg-slate-900/90 px-1.5 py-0.2 rounded border border-sky-400/50 leading-tight">
             {isAll88
               ? '88 Tuts'
               : startOctave === 0
@@ -271,16 +467,21 @@ export const MiniMap: React.FC = () => {
         type="button"
         disabled={!canShiftRight}
         onClick={handleShiftRight}
-        title="Shift up 1 octave (ArrowRight)"
-        className={`p-1 rounded text-xs font-mono transition-colors flex items-center justify-center ${
+        aria-label="Geser rentang 1 oktaf ke kanan"
+        title={hasOffscreenRight ? 'Ada not lagu di oktaf kanan! Klik untuk menggeser' : 'Geser rentang 1 oktaf ke kanan (Panah Kanan)'}
+        className={`relative p-1.5 rounded text-xs transition-all flex items-center justify-center focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400 ${
           canShiftRight
-            ? 'text-slate-300 hover:text-white hover:bg-slate-800 active:bg-slate-700'
+            ? hasOffscreenRight
+              ? 'text-sky-200 bg-sky-950/80 border border-sky-500/80 ring-1 ring-sky-400/60 shadow-sm shadow-sky-500/20'
+              : 'text-slate-300 hover:text-white hover:bg-slate-800 active:bg-slate-700'
             : 'text-slate-600 opacity-40 cursor-not-allowed'
         }`}
       >
-        <ChevronRight size={16} />
+        <ChevronRight size={16} aria-hidden="true" />
+        {hasOffscreenRight && canShiftRight && (
+          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-sky-400 animate-ping" aria-hidden="true" />
+        )}
       </button>
-    </div>
+    </section>
   );
 };
-
